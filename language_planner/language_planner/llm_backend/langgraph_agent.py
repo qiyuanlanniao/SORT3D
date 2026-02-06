@@ -1,4 +1,4 @@
-import json
+
 from langgraph.graph import MessagesState
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import MessagesState
@@ -78,7 +78,7 @@ def build_graph(tools, llm_with_tools, save_graph_png=False):
         return {"messages": [response]}
     
     def instruct_retry(state: MessagesState):
-        return {"messages": []}
+        return {"messages": [HumanMessage(content="Reminder, you should provide a tool call through tool calling API, you should only output content when you are explicitly asked so, your attempt to tool call has failed.")]}
     
     builder = StateGraph(MessagesState)
 
@@ -151,8 +151,10 @@ def build_actor_critic_graph(tools, actor_with_tools, critic_llm, save_graph_png
         else:
             return "assistant"
     
-    def assistant(state: MessagesState):
-        response = llm_with_tools.invoke(state["messages"])
+    def assistant(state: ActorCriticState):
+        response = actor_with_tools.invoke(state["messages"])
+        # print(state["messages"][-1])
+        # print("Actor Output:", response)
         parsed = False
         # if no tool call, but has content that resembles a tool call, manually parse it
         if len(response.tool_calls) == 0 and "arguments" in response.content and "name" in response.content:
