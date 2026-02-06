@@ -1,0 +1,25 @@
+===============
+INPUT STATEMENT
+===============
+go to the chair
+===============
+OUTPUT CODE
+===============
+Traces:
+Human: End of examples. Now start the actual task afresh based on current objects.
+
+Object List: 
+[[0, 'cha...
+Reasoning: 
+The user has instructed the robot to "go to the chair." However, there are multiple chairs in the environment (7 chairs in total). I need to determine which chair the user is referring to. 
+
+Since the instruction is ambiguous, I need to make a reasonable assumption. Common strategies in such cases include:
+1. Going to the chair closest to the robot's starting position.
+2. Going to the chair that is most centrally located or most prominent (e.g., largest or most isolated).
+3. Going to the chair that is closest to another prominent object (if any were provided).
+
+In this case, there are no other objects or context provided, so the most reasonable assumption is to go to the chair closest to the robot's starting position (101, 112, 0).
+
+I will calculate the distance from the robot's starting position to each chair and select the closest one.
+Code:
+def go():

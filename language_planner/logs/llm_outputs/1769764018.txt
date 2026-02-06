@@ -1,0 +1,26 @@
+===============
+INPUT STATEMENT
+===============
+Go to the chair next to the nearest table.
+===============
+OUTPUT CODE
+===============
+Traces:
+Human: End of examples. Now please solve the following task FRESH based on the current object list.
+
+Object...
+Reasoning: 
+The user has instructed the robot to "Go to the chair next to the nearest table."
+
+First, I need to identify the nearest table to the robot's current position. The robot's current position is given by the object with ID -1 (egorobot) at coordinates (180, 121, 0).
+
+Next, I need to find the table that is closest to the robot. There are four tables in the object list with IDs 36, 37, 38, and 39, and 40.
+
+After identifying the nearest table, I need to find the chair that is next to it. "Next to" could mean either to the left or right of the table, or generally near it. I will use the `find_near` tool to find the chair closest to the nearest table.
+The nearest table to the robot is table 38. Now, I need to find the chair that is next to this table. I will use the `find_near` tool again to find the chair closest to table 38.
+The closest chair to table 38 is chair 28. Therefore, the chair next to the nearest table is chair 28.
+
+Now, I will command the robot to go near chair 28.
+Code:
+def go():
+    go_near(28)

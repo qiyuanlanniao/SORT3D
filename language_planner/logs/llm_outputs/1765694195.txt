@@ -1,0 +1,23 @@
+===============
+INPUT STATEMENT
+===============
+go to the chair
+===============
+OUTPUT CODE
+===============
+Traces:
+Human: End of examples. Now please solve the following task FRESH based on the current object list.
+
+Object...
+Reasoning: 
+The user has instructed the robot to "go to the chair." However, there are multiple chairs in the object list (IDs 0, 1, 2, 3, and 4). I need to determine which chair the user is referring to. 
+
+Since the instruction is ambiguous, I should use the robot's current position as a reference to find the closest chair. This is the most logical approach because the user likely expects the robot to move to the nearest chair if no specific chair is mentioned.
+
+I will use the `find_near` tool to find the chair closest to the robot (anchor_id: -1).
+The `find_near` tool has returned the chairs ordered by their distance from the robot (ID -1). The closest chair to the robot is chair 4. 
+
+I will now command the robot to go near chair 4.
+Code:
+def go():
+    go_near(4)

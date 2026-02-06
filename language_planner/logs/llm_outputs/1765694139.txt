@@ -1,0 +1,25 @@
+===============
+INPUT STATEMENT
+===============
+go to the chair
+===============
+OUTPUT CODE
+===============
+Traces:
+Human: End of examples. Now please solve the following task FRESH based on the current object list.
+
+Object...
+Reasoning: 
+The user has instructed the robot to "go to the chair." However, there are 68 chairs in the object list, so I need to determine which chair the user is referring to. 
+
+Since the instruction is ambiguous, I need to make a reasonable assumption about which chair the user wants the robot to navigate to. Here are some possible approaches:
+
+1. **Closest Chair to the Robot**: The robot's current position is at (283, 99, 0). The most logical assumption is that the user wants the robot to go to the chair closest to its current position.
+
+2. **Chair in a Specific Location**: If the user had specified a location (e.g., "the chair near the corner" or "the chair in the middle"), I could use tools like `find_objects_near_room_corner` or `order_left_to_right` to identify the correct chair. However, no such context is provided.
+
+3. **Default to the First Chair**: This is not ideal, as the first chair in the list may not be the most relevant.
+
+Given the lack of additional context, the best approach is to assume the user wants the robot to navigate to the chair closest to its current position. I will use the `find_near` tool to find the chair closest to the robot (anchor_id = -1).
+Code:
+def go():

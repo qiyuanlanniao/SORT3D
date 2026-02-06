@@ -145,7 +145,7 @@ class LLMQueryHandler:
         elif self.run_mode == NavQueryRunMode.USE_TOOL_USE_GRAPH:
             self.nav_chain = build_graph(
                 tools=self.toolbox.tools,
-                llm_with_tools=self.llm.bind_tools(self.toolbox.tools),
+                llm_with_tools=self.llm.bind_tools(self.toolbox.tools, tool_choice="any"),
             )
         elif self.run_mode == NavQueryRunMode.USE_TOOL_ACTOR_CRITIC_GRAPH:
             self.nav_chain = build_actor_critic_graph(
@@ -218,18 +218,36 @@ class LLMQueryHandler:
                 return f"Error generating navigation query: {e}"
         else:
             warning = ""
-            example1 = get_tool_call_example_1(self.system_mode == SystemMode.BENCHMARK)
-            nav_prompt = [
-                SystemMessage(content=prompt),
-                HumanMessage(content="Here are two examples:"),
-                *example1,
-            ]
+            
+            # --- 修改开始：将消息对象转换成纯文本字符串的辅助逻辑 ---
+            def format_examples_to_text(msgs):
+                text = ""
+                for m in msgs:
+                    if isinstance(m, HumanMessage):
+                        text += f"\n[User Input]: {m.content}\n"
+                    elif isinstance(m, AIMessage):
+                        if m.tool_calls:
+                            for tc in m.tool_calls:
+                                text += f"[AI Action]: Calling tool '{tc['name']}' with args {tc['args']}\n"
+                        if m.content:
+                            text += f"[AI Thought]: {m.content}\n"
+                    elif isinstance(m, ToolMessage):
+                        text += f"[Tool Output]: {m.content}\n"
+                return text
+
+            example1_msgs = get_tool_call_example_1(self.system_mode == SystemMode.BENCHMARK)
+            example_text = "\n=== EXAMPLE 1 ===\n" + format_examples_to_text(example1_msgs)
+            
             if self.system_mode == SystemMode.LIVE_NAVIGATION:
-                example2 = get_tool_call_example_2()
-                nav_prompt.extend(example2)
-            nav_prompt.append(
-                HumanMessage(content="End Example, you should start afresh. \n Object List: \n" + str(objects) + "\n" + "User Input: \n" + input_query)
-            )
+                example2_msgs = get_tool_call_example_2()
+                example_text += "\n=== EXAMPLE 2 ===\n" + format_examples_to_text(example2_msgs)
+
+            # 重新构建 nav_prompt：让示例变成 SystemMessage 的一部分，不再是独立对象
+            nav_prompt = [
+                SystemMessage(content=prompt + "\n\nFollow this reasoning and tool usage format:\n" + example_text),
+                HumanMessage(content="End of examples. Now please solve the following task FRESH based on the current object list.\n\nObject List: \n" + str(objects) + "\n\nUser Input: \n" + input_query)
+            ]
+            # 后面保持不变
             if self.run_mode == NavQueryRunMode.USE_TOOL_USE_GRAPH:
 
                 if map_pcl is not None:
@@ -254,26 +272,30 @@ class LLMQueryHandler:
             except Exception as e:
                 warnings.warn(f"Error generating navigation query: {e}")
                 traceback.print_exc()
-                warning = f"Error generating navigation query: {e}"
-                warning += traceback.format_exc()
-                print("============ERROR STATE==============")
-                print(state)
-                print("=====================================")
+                # warning = f"Error generating navigation query: {e}"
+                # warning += traceback.format_exc()
+                # print("============ERROR STATE==============")
+                # print(state)
+                # print("=====================================")
             # Parse messages
-            print("============STATE==============")
-            print(state)
-            print("=====================================")
+            # print("============STATE==============")
+            # print(state)
+            # print("=====================================")
             steps = []
             for message in state["messages"]:
+                # 如果消息内容太长（通常是那个 Object List），就不要打印它的内容
+                content_preview = (message.content[:100] + "...") if len(message.content) > 100 else message.content
+                
                 if isinstance(message, AIMessage) and len(message.tool_calls) > 0:
                     for tool_call in message.tool_calls:
-                        steps.append(f"AI Calling tool {tool_call['name']} with args {tool_call['args']}")
-                if isinstance(message, AIMessage) and len(message.tool_calls) == 0:
-                    steps.append(f"AI: {message.content}")
-                if isinstance(message, ToolMessage):
-                    steps.append(f"Tool: {message.name}, Content: {message.content}")
-                if isinstance(message, HumanMessage):
-                    steps.append(f"Human: {message.content}")
+                        steps.append(f"AI Action: Calling {tool_call['name']}")
+                elif isinstance(message, AIMessage):
+                    steps.append(f"AI Thought: {content_preview}")
+                elif isinstance(message, ToolMessage):
+                    steps.append(f"Tool Result: {content_preview}")
+                elif isinstance(message, HumanMessage):
+                    # 这里的 HumanMessage 往往包含了几千字的物体列表，我们只打印前 50 个字
+                    steps.append(f"Human: {content_preview}")
 
             traces = "\n".join(steps)
             cmds = self.toolbox.cmd # [('go_near', (1,)), ('go_between', (2, 3))]

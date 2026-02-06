@@ -10,7 +10,7 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.time import Time
-from geometry_msgs.msg import Pose2D, PointStamped
+from geometry_msgs.msg import Pose2D, PointStamped, PoseStamped
 from nav_msgs.msg import Odometry
 from std_msgs.msg import String
 from sensor_msgs.msg import PointCloud2, PointField
@@ -64,8 +64,8 @@ class LanguagePlanner(Node):
         self.object_query_pub = self.create_publisher(String, '/object_query', 5)
         self.object_marker_pub = self.create_publisher(Marker, '/selected_object_marker', 5)
 
-        self.pose_sub = self.create_subscription(Odometry, '/state_estimation', self.handle_pose, 1, callback_group=MutuallyExclusiveCallbackGroup())
-        self.map_sub = self.create_subscription(PointCloud2, '/explored_areas', self.handle_map, 1, callback_group=MutuallyExclusiveCallbackGroup())
+        self.pose_sub = self.create_subscription(Odometry, '/mavros/vision_pose/pose', self.handle_pose, 1, callback_group=MutuallyExclusiveCallbackGroup())
+        self.map_sub = self.create_subscription(PointCloud2, '/cloud_registered', self.handle_map, 1, callback_group=MutuallyExclusiveCallbackGroup())
         self.freespace_sub = self.create_subscription(PointCloud2, '/traversable_area', self.handle_freespace, 1, callback_group=MutuallyExclusiveCallbackGroup())
 
         self.caption_sub = self.create_subscription(String, '/queried_captions', self.handle_captions, 1, callback_group=MutuallyExclusiveCallbackGroup())
@@ -96,10 +96,10 @@ class LanguagePlanner(Node):
 
     
     
-    def handle_pose(self, pose: Odometry):
-        self.cur_pos[0] = pose.pose.pose.position.x
-        self.cur_pos[1] = pose.pose.pose.position.y
-        self.cur_pos[2] = pose.pose.pose.position.z
+    def handle_pose(self, msg: PoseStamped):
+        self.cur_pos[0] = msg.pose.position.x
+        self.cur_pos[1] = msg.pose.position.y
+        self.cur_pos[2] = msg.pose.position.z
 
     
     def handle_map(self, msg: PointCloud2):
@@ -290,16 +290,28 @@ class LanguagePlanner(Node):
             self.log_info("Queried objects")
             while rclpy.ok() and self.obj_query_response_echo != ["GET_ALL"]:
                 pass
-            object_dict = self.object_dict
+            
+            # 这里的 self.object_dict 键是字符串 (来自 JSON)
+            raw_object_dict = self.object_dict 
 
-            filtered_obj_ids = self.language_planner_backend.get_retrieved_objects(obj_query_list, object_dict)
-            if '-1' in self.object_dict:
+            filtered_obj_ids = self.language_planner_backend.get_retrieved_objects(obj_query_list, raw_object_dict)
+            
+            if '-1' in raw_object_dict:
                 filtered_obj_ids.append('-1')
 
-            object_dict = {int(obj_id):object_dict[obj_id] for obj_id in filtered_obj_ids}
+            # 修复方案：强制转换 obj_id 为字符串去原字典查找，转换新字典键为整数
+            new_object_dict = {}
+            for obj_id in filtered_obj_ids:
+                str_id = str(obj_id)
+                if str_id in raw_object_dict:
+                    new_object_dict[int(obj_id)] = raw_object_dict[str_id]
+                else:
+                    self.log_info(f"Warning: LLM suggested ID {obj_id}, but it's not in the scene!")
+            
+            object_dict = new_object_dict
 
             
-        self.log_info(f'{object_dict}')
+        # self.log_info(f'{object_dict}')
 
         self.target_waypoints, self.target_ids, filtered_objects_out, output_code = self.language_planner_backend.generate_plan(
             self.environment_name,
