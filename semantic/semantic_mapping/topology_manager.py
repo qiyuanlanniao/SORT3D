@@ -91,32 +91,6 @@ class TopologyManager(Node):
             else:
                 self.get_logger().warn("等待点云数据...")
 
-    # def process_and_generate_node(self, curr_pos):
-    #     try:
-    #         points = pc2.read_points_numpy(self.latest_cloud_msg, field_names=("x", "y", "z"))
-    #         if len(points) > 0:
-    #             tree = KDTree(points)
-    #             dist, _ = tree.query(curr_pos)
-                
-    #             # 放宽要求，只要离墙 10cm 以上就生成节点，保证路径连续
-    #             if dist > 0.1: 
-    #                 new_place_id = f"p_{self.node_count}"
-    #                 self.graph.add_node(new_place_id, pos=curr_pos, radius=dist, type='place')
-                    
-    #                 # 连接上一个地点
-    #                 if self.node_count > 0:
-    #                     prev_id = f"p_{self.node_count-1}"
-    #                     if self.graph.has_node(prev_id):
-    #                         self.graph.add_edge(new_place_id, prev_id)
-                    
-    #                 # 关联物体
-    #                 self.link_objects_to_place(new_place_id, curr_pos, dist)
-    #                 self.node_count += 1
-    #                 if self.node_count == 1:
-    #                     self.graph_analysis_callback()
-    #                 self.get_logger().info(f"📍 生成 Place {new_place_id} (R={dist:.2f}m)")
-    #     except Exception as e:
-    #         self.get_logger().error(f"生成节点失败: {e}")
     def seek_gvd_center(self, start_pos, tree):
         """
         GVD 思想实现：寻找局部最大距离点
@@ -182,63 +156,6 @@ class TopologyManager(Node):
                 # label = data.get('label', 'unknown')
                 # self.get_logger().info(f"🔗 [Reactive] 物体 {label}({obj_id}) 已连接新地点 {place_id}")
 
-    # def graph_analysis_callback(self):
-    #     place_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'place']
-    #     if not place_nodes: return
-        
-    #     edges_to_remove = []
-    #     for u, v in self.graph.edges():
-    #         type_u = self.graph.nodes[u].get('type')
-    #         type_v = self.graph.nodes[v].get('type')
-    #         # 如果边连接了房间层级，就标记删除
-    #         if 'room' in [type_u, type_v] or 'building' in [type_u, type_v]:
-    #             edges_to_remove.append((u, v))
-    #     self.graph.remove_edges_from(edges_to_remove)
-
-    #     # 1. 提取房间核心 (模拟“放气”)
-    #     wide_nodes = [n for n in place_nodes if self.graph.nodes[n].get('radius', 0) > self.room_threshold]
-    #     room_cores = list(nx.connected_components(self.graph.subgraph(wide_nodes))) if wide_nodes else []
-
-    #     # 2. 兜底划分
-    #     if not room_cores:
-    #         room_cores = list(nx.connected_components(self.graph.subgraph(place_nodes)))
-    #         self.get_logger().info(f"🏠 初始阶段：创建 {len(room_cores)} 个基础区域")
-
-    #     # 3. 更新图中的 Room 节点和映射
-    #     node_to_room = {}
-    #     for i, core in enumerate(room_cores):
-    #         room_id = f"room_{i}"
-    #         avg_pos = np.mean([self.graph.nodes[p]['pos'] for p in core], axis=0)
-            
-    #         if not self.graph.has_node(room_id):
-    #             self.graph.add_node(room_id, type='room', pos=avg_pos)
-    #         else:
-    #             self.graph.nodes[room_id]['pos'] = avg_pos
-            
-    #         for p_id in core:
-    #             node_to_room[p_id] = room_id
-    #             self.graph.add_edge(p_id, room_id)
-
-    #     # 4. 将物体和窄点吸附到最近房间
-    #     for n, d in self.graph.nodes(data=True):
-    #         if d['type'] in ['place', 'object'] and n not in node_to_room:
-    #             # 寻找已经有房间归属的最近邻居
-    #             for neighbor in self.graph.neighbors(n):
-    #                 if neighbor in node_to_room:
-    #                     self.graph.add_edge(n, node_to_room[neighbor])
-    #                     break
-
-    #     # 5. Building (L5)
-    #     room_ids = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'room']
-    #     if room_ids:
-    #         b_id = "b_0"
-    #         if not self.graph.has_node(b_id): self.graph.add_node(b_id, type='building')
-    #         b_pos = np.mean([self.graph.nodes[r]['pos'] for r in room_ids], axis=0)
-    #         self.graph.nodes[b_id]['pos'] = b_pos
-    #         for r in room_ids: self.graph.add_edge(b_id, r)
-
-    #     self.publish_graph_to_rviz()
-
     def reconcile_object_to_places(self):
         """
         全局对齐：确保每个物体【仅连接】一个最近的地点
@@ -286,6 +203,103 @@ class TopologyManager(Node):
                         objects_in_room.append(f"{label}")
             
             lines.append(f"- {r_id}: Contains {list(set(objects_in_room))}") # 去重显示
+        return "\n".join(lines)
+    
+    def anti_neck_merge(self, cores, place_nodes, delta):
+        """
+        cores: List[Set[place_id]]
+        """
+        if len(cores) <= 1:
+            return cores
+
+        merged = []
+        used = set()
+
+        for i, core_a in enumerate(cores):
+            if i in used:
+                continue
+
+            merged_core = set(core_a)
+
+            for j, core_b in enumerate(cores):
+                if j <= i or j in used:
+                    continue
+
+                # --- 原始 place 图是否连通 ---
+                connected = False
+                bridge_count = float('inf')
+
+                for pa in core_a:
+                    for pb in core_b:
+                        if nx.has_path(self.graph, pa, pb):
+                            path = nx.shortest_path(self.graph, pa, pb)
+                            # 计算“被过滤掉”的节点数量
+                            bridge_nodes = [
+                                p for p in path
+                                if self.graph.nodes[p].get('radius', 0) <= delta
+                            ]
+                            bridge_count = min(bridge_count, len(bridge_nodes))
+                            connected = True
+
+                if not connected:
+                    continue
+
+                # --- cluster 距离 ---
+                pos_a = np.mean([self.graph.nodes[p]['pos'] for p in core_a], axis=0)
+                pos_b = np.mean([self.graph.nodes[p]['pos'] for p in core_b], axis=0)
+                dist = np.linalg.norm(pos_a - pos_b)
+
+                # --- 抗细脖子判据 ---
+                if bridge_count <= 2 and dist < 4.0:
+                    merged_core |= core_b
+                    used.add(j)
+
+            merged.append(merged_core)
+            used.add(i)
+
+        return merged
+
+    def generate_room_connectivity_description(self):
+        """
+        通过分析下层地点（Place）的连通性来推导房间（Room）之间的连通性
+        """
+        room_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'room']
+        connected_rooms = set()
+
+        # 遍历每一对房间
+        for i, r_a in enumerate(room_nodes):
+            # 找到属于房间 A 的所有地点节点
+            places_in_a = [n for n in self.graph.neighbors(r_a) if self.graph.nodes[n].get('type') == 'place']
+            
+            for r_b in room_nodes[i+1:]:
+                # 找到属于房间 B 的所有地点节点
+                places_in_b = [n for n in self.graph.neighbors(r_b) if self.graph.nodes[n].get('type') == 'place']
+                
+                # 检查房间 A 的地点与房间 B 的地点之间是否存在边
+                is_connected = False
+                for p_a in places_in_a:
+                    for p_b in places_in_b:
+                        if self.graph.has_edge(p_a, p_b):
+                            is_connected = True
+                            break
+                    if is_connected:
+                        break
+                
+                if is_connected:
+                    # 记录这对连通的房间（使用排序保证唯一性）
+                    connected_rooms.add(tuple(sorted((r_a, r_b))))
+
+        # 生成描述文字
+        lines = ["Room Connectivity:"]
+        if not connected_rooms:
+            lines.append("- No inter-room connections detected yet.")
+        else:
+            for r1, r2 in sorted(connected_rooms):
+                # 提取 Room 标签或 ID 进行美化显示
+                label1 = self.graph.nodes[r1].get('label', r1)
+                label2 = self.graph.nodes[r2].get('label', r2)
+                lines.append(f"- {label1} is connected to {label2}")
+        
         return "\n".join(lines)
     
     def graph_analysis_callback(self):
@@ -355,8 +369,13 @@ class TopologyManager(Node):
         # 在应用新划分前，清理旧的 Room 和 Building 边
         self.clear_hierarchical_edges()
 
-        # 获取最终的房间核心
-        final_cores = clusters_at_threshold.get(optimal_delta, [set(place_nodes)])
+        raw_cores = clusters_at_threshold.get(optimal_delta, [set(place_nodes)])
+
+        final_cores = self.anti_neck_merge(
+            raw_cores,
+            place_nodes,
+            optimal_delta
+        )
         
         node_to_room = {}
         for i, core in enumerate(final_cores):
@@ -397,6 +416,8 @@ class TopologyManager(Node):
         #     print(f"Node: {n} ({d['type']}) -> Pos: {p}")
         hierarchy_description = self.generate_hierarchy_description()
         self.get_logger().info(f"--- DSG Hierarchy Description ---\n{hierarchy_description}\n--------------------------------")
+        connectivity_description = self.generate_room_connectivity_description()
+        self.get_logger().info(f"--- Room Connectivity Description ---\n{connectivity_description}\n--------------------------------")
         self.publish_graph_to_rviz()
 
     def clear_hierarchical_edges(self):
