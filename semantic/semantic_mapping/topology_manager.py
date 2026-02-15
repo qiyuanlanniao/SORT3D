@@ -1,3 +1,4 @@
+import ast
 import rclpy
 from rclpy.node import Node
 import numpy as np
@@ -42,44 +43,59 @@ class TopologyManager(Node):
         self.analysis_timer = self.create_timer(5.0, self.graph_analysis_callback)
         self.room_id_to_color = {}
 
+        self.loop_closure_dist = 1.5  # 判定回环的物理距离阈值
+        self.loop_closure_min_id_diff = 15  # 只有当 ID 差值较大时才认为是回环，防止和邻居误触发
+
     def cloud_callback(self, msg):
         self.latest_cloud_msg = msg
 
     def obj_callback(self, msg):
         for marker in msg.markers:
-            # 1. 过滤掉无效的 Marker (类型0通常是占位或删除信号)
-            if marker.type == 0 or marker.action != 0: 
+            raw_obj_id = f"{marker.ns}_{marker.id}" 
+
+            if marker.action == 2: # DELETE (感知节点认为该物体是噪点或已消失)
+                if self.graph.has_node(raw_obj_id):
+                    self.graph.remove_node(raw_obj_id)
+                if raw_obj_id in self.current_objects:
+                    del self.current_objects[raw_obj_id]
+                continue
+            
+            if marker.action == 3: # DELETEALL
+                obj_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'object']
+                self.graph.remove_nodes_from(obj_nodes)
+                self.current_objects.clear()
                 continue
 
-            obj_id = f"obj_{marker.ns}_{marker.id}" 
-            
-            # 2. 【核心修复】判断 Marker 类型并提取真实坐标
-            if marker.type == 5:  # LINE_LIST (你的物体框类型)
+            # 1. 过滤掉无效的 Marker 或没有标签的物体
+            if marker.type == 0 or not marker.ns or marker.ns == "{}": 
+                continue
+
+            # 2. 提取真实坐标 (保持原有逻辑)
+            if marker.type == 5:  # LINE_LIST
                 if len(marker.points) > 0:
-                    # 计算 24 个顶点的平均值作为物体的中心坐标
                     pts = np.array([[p.x, p.y, p.z] for p in marker.points])
                     pos = np.mean(pts, axis=0)
-                else:
-                    continue
+                else: continue
             else:
-                # 其他类型（如 CUBE/SPHERE）通常直接用 pose.position
                 pos = np.array([marker.pose.position.x, marker.pose.position.y, marker.pose.position.z])
 
-            # 3. 检查算出来的坐标是否依然为 0 (防止异常)
-            if np.all(pos == 0):
-                continue
+            if np.all(pos == 0): continue
 
-            # --- 以下保持你的逻辑不变 ---
-            self.current_objects[obj_id] = {'pos': pos, 'label': marker.ns}
+            # 3. 更新图节点 (使用稳定的 raw_obj_id)
+            self.current_objects[raw_obj_id] = {'pos': pos, 'label': marker.ns}
             
-            if not self.graph.has_node(obj_id):
-                self.graph.add_node(obj_id, type='object', label=marker.ns, pos=pos)
+            if not self.graph.has_node(raw_obj_id):
+                self.graph.add_node(raw_obj_id, type='object', label=marker.ns, pos=pos)
             else:
-                self.graph.nodes[obj_id]['pos'] = pos
+                # 更新已有物体的属性，而不是创建新节点
+                self.graph.nodes[raw_obj_id]['pos'] = pos
+                self.graph.nodes[raw_obj_id]['label'] = marker.ns
 
-            # 打印真实坐标进行验证
-            # self.get_logger().info(f"📦 [Object] {marker.ns}({marker.id}) 真实坐标: x={pos[0]:.2f}, y={pos[1]:.2f}, z={pos[2]:.2f}")
-
+            # 4. 实时建立与附近地点的连接
+            for node, data in self.graph.nodes(data=True):
+                if data.get('type') == 'place':
+                    if np.linalg.norm(pos - data['pos']) < 2.0: # 稍微收紧关联距离
+                        self.graph.add_edge(raw_obj_id, node)
 
     def pose_callback(self, msg):
         curr_pos = np.array([msg.pose.position.x, msg.pose.position.y, msg.pose.position.z])
@@ -114,47 +130,12 @@ class TopologyManager(Node):
                 
         return best_pos, max_dist
     
-    def process_and_generate_node(self, curr_pos):
-        try:
-            points = pc2.read_points_numpy(self.latest_cloud_msg, field_names=("x", "y", "z"))
-            if len(points) > 0:
-                tree = KDTree(points)
-                
-                # --- GVD 核心逻辑：寻找局部“最空旷”点 ---
-                # 不直接用当前点，而是在周围探测一下，找一个离墙最远的位置
-                gvd_pos, dist = self.seek_gvd_center(curr_pos, tree)
-                
-                if dist > 0.1: 
-                    new_place_id = f"p_{self.node_count}"
-                    # 使用优化后的 gvd_pos 而不是原始的 curr_pos
-                    self.graph.add_node(new_place_id, pos=gvd_pos, radius=dist, type='place')
-                    # self.get_logger().info(f"📍 [Place] {new_place_id} 坐标: x={gvd_pos[0]:.2f}, y={gvd_pos[1]:.2f}, z={gvd_pos[2]:.2f}")
-                    
-                    if self.node_count > 0:
-                        prev_id = f"p_{self.node_count-1}"
-                        if self.graph.has_node(prev_id):
-                            self.graph.add_edge(new_place_id, prev_id)
-                            # self.get_logger().info(f"📍 [Place] {new_place_id} 坐标: x={gvd_pos[0]:.2f}, y={gvd_pos[1]:.2f}, z={gvd_pos[2]:.2f}")
-                    
-                    self.link_objects_to_place(new_place_id, gvd_pos, dist)
-                    self.node_count += 1
-                    
-                    # 触发“开局即显示”
-                    if self.node_count == 1:
-                        self.graph_analysis_callback()
-                        
-                    self.get_logger().info(f"📍 GVD节点 {new_place_id} (R={dist:.2f}m)")
-        except Exception as e:
-            self.get_logger().error(f"GVD处理失败: {e}")
 
     def link_objects_to_place(self, place_id, place_pos, radius):
         for obj_id, data in self.current_objects.items():
             dist = np.linalg.norm(data['pos'] - place_pos)
             if dist < max(radius, 3.0): 
                 self.graph.add_edge(obj_id, place_id)
-                # # 新增 DEBUG 输出
-                # label = data.get('label', 'unknown')
-                # self.get_logger().info(f"🔗 [Reactive] 物体 {label}({obj_id}) 已连接新地点 {place_id}")
 
     def reconcile_object_to_places(self):
         """
@@ -189,20 +170,39 @@ class TopologyManager(Node):
             self.graph.add_edge(o_id, p_ids[min_idx])
 
     def generate_hierarchy_description(self):
-        lines = ["Current Scene Hierarchy:"]
+        """
+        微调：过滤掉没有有效分类的物体输出
+        """
+        lines = ["Current Scene Hierarchy (Detailed):"]
         room_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'room']
+        
         for r_id in room_nodes:
+            r_pos = self.graph.nodes[r_id]['pos']
+            r_pos_list = [round(float(x), 2) for x in r_pos]
+            lines.append(f"- {r_id} (pos center: {r_pos_list})")
+
             objects_in_room = []
-            # 找到属于该房间的所有地点
             associated_places = [n for n in self.graph.neighbors(r_id) if self.graph.nodes[n].get('type') == 'place']
-            for p_id in associated_places:
-                # 找到连向该地点的所有物体
-                for neighbor in self.graph.neighbors(p_id):
-                    if self.graph.nodes[neighbor].get('type') == 'object':
-                        label = self.graph.nodes[neighbor].get('label', 'unknown')
-                        objects_in_room.append(f"{label}")
             
-            lines.append(f"- {r_id}: Contains {list(set(objects_in_room))}") # 去重显示
+            for p_id in associated_places:
+                for neighbor in self.graph.neighbors(p_id):
+                    node_data = self.graph.nodes[neighbor]
+                    if node_data.get('type') == 'object':
+                        label_raw = node_data.get('label', '{}')
+                        try:
+                            label_dict = ast.literal_eval(label_raw)
+                            if not label_dict: continue # 过滤空字典
+                            best_label = max(label_dict, key=label_dict.get)
+                            # 提取原始数字 ID
+                            obj_unique_id = neighbor.split('_')[-1]
+                            pos = node_data.get('pos', [0, 0, 0])
+                            obj_info = f"{{'{best_label}':id: {obj_unique_id},pos center: [{pos[0]:.2f}, {pos[1]:.2f}, {pos[2]:.2f}]}}"
+                            objects_in_room.append(obj_info)
+                        except: continue
+            
+            for obj_line in sorted(list(set(objects_in_room))):
+                lines.append(f"    {obj_line}")
+                
         return "\n".join(lines)
     
     def anti_neck_merge(self, cores, place_nodes, delta):
@@ -250,7 +250,7 @@ class TopologyManager(Node):
                 dist = np.linalg.norm(pos_a - pos_b)
 
                 # --- 抗细脖子判据 ---
-                if bridge_count <= 2 and dist < 4.0:
+                if bridge_count <= 5 and dist < 6.0:
                     merged_core |= core_b
                     used.add(j)
 
@@ -302,9 +302,94 @@ class TopologyManager(Node):
         
         return "\n".join(lines)
     
+    def process_and_generate_node(self, curr_pos):
+        try:
+            points = pc2.read_points_numpy(self.latest_cloud_msg, field_names=("x", "y", "z"))
+            if len(points) <= 0: return
+            
+            tree = KDTree(points)
+            gvd_pos, dist = self.seek_gvd_center(curr_pos, tree)
+            
+            if dist > 0.1:
+                # --- [新增] 回环检测逻辑 ---
+                loop_node_id = self.find_loop_closure(gvd_pos)
+                
+                if loop_node_id:
+                    # 发现回环！不生成新节点，直接建立连接
+                    self.get_logger().info(f"🔄 [Loop Closure] 检测到回环！连接当前路径到旧节点 {loop_node_id}")
+                    
+                    if self.node_count > 0:
+                        prev_id = f"p_{self.node_count-1}"
+                        if self.graph.has_node(prev_id):
+                            self.graph.add_edge(loop_node_id, prev_id)
+                    
+                    # 更新当前位置参考，但不增加 node_count
+                    self.last_pos = gvd_pos
+                    # 关联物体到这个旧节点
+                    self.link_objects_to_place(loop_node_id, gvd_pos, dist)
+                else:
+                    # --- 原有的生成节点逻辑 ---
+                    new_place_id = f"p_{self.node_count}"
+                    self.graph.add_node(new_place_id, pos=gvd_pos, radius=dist, type='place')
+                    
+                    if self.node_count > 0:
+                        prev_id = f"p_{self.node_count-1}"
+                        if self.graph.has_node(prev_id):
+                            self.graph.add_edge(new_place_id, prev_id)
+                    
+                    self.link_objects_to_place(new_place_id, gvd_pos, dist)
+                    self.node_count += 1
+                    self.last_pos = gvd_pos
+                    self.get_logger().info(f"📍 生成 Place {new_place_id}")
+                    
+        except Exception as e:
+            self.get_logger().error(f"处理失败: {e}")
+
+    def find_loop_closure(self, curr_pos):
+        """
+        寻找物理距离近但拓扑距离远的旧节点
+        """
+        place_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'place']
+        for node_id in place_nodes:
+            # 提取节点 ID 数字
+            try:
+                node_num = int(node_id.split('_')[1])
+                # 防止和刚刚生成的几个邻居连上
+                if self.node_count - node_num < self.loop_closure_min_id_diff:
+                    continue
+            except: continue
+
+            old_pos = self.graph.nodes[node_id]['pos']
+            dist = np.linalg.norm(curr_pos - old_pos)
+            
+            if dist < self.loop_closure_dist:
+                return node_id
+        return None
+    
+    def reinforce_graph_connectivity(self):
+        """
+        回环优化：增强物理邻近点的连通性，防止漂移导致房间分裂
+        """
+        places = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'place']
+        if len(places) < 10: return
+
+        coords = np.array([self.graph.nodes[n]['pos'] for n in places])
+        # 使用 KDTree 寻找所有物理上靠近但图中没连上的点
+        tree = KDTree(coords)
+        for i, p_id in enumerate(places):
+            # 寻找 1.0 米内的邻居
+            idxs = tree.query_ball_point(coords[i], r=1.0)
+            for j in idxs:
+                neighbor_id = places[j]
+                if p_id != neighbor_id and not self.graph.has_edge(p_id, neighbor_id):
+                    # 建立“潜在回环”边
+                    self.graph.add_edge(p_id, neighbor_id)
+    
     def graph_analysis_callback(self):
         # 1. 首先确保物体和地点已经连上
         self.reconcile_object_to_places()
+
+        self.reinforce_graph_connectivity()
 
         # 2. 之后再执行原有的房间划分逻辑...
         place_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'place']
@@ -363,7 +448,7 @@ class TopologyManager(Node):
         except:
             optimal_delta = thresholds[0] # 兜底选搜索范围的起点
 
-        self.get_logger().info(f"📈 拓扑分析：自适应阈值选择 {optimal_delta:.1f}m，判定房间数：{winning_count}")
+        # self.get_logger().info(f"📈 拓扑分析：自适应阈值选择 {optimal_delta:.1f}m，判定房间数：{winning_count}")
 
         # --- 3. 执行最终划分与清理 ---
         # 在应用新划分前，清理旧的 Room 和 Building 边
