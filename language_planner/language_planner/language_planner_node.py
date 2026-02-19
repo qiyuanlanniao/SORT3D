@@ -1,14 +1,16 @@
 import numpy as np
 import os
+import open3d as o3d
 import json
 import argparse
 import sys
 from enum import Enum
 from pathlib import Path
+
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.time import Time
 from geometry_msgs.msg import Pose2D, PointStamped, PoseStamped
 from nav_msgs.msg import Odometry
@@ -16,7 +18,7 @@ from std_msgs.msg import String
 from sensor_msgs.msg import PointCloud2, PointField
 from sensor_msgs_py.point_cloud2 import read_points_list, read_points_numpy
 from visualization_msgs.msg import MarkerArray, Marker
-from time import sleep
+import time
 
 from language_planner.prompts import get_prompt
 from language_planner.llm_backend.llm_query_langchain import NavQueryRunMode, ObjectQueryType, LanguageModel, SystemMode
@@ -24,6 +26,7 @@ from language_planner.language_planner_backend import LanguagePlannerBackend
 
 from captioner.tools import ros2_bag_utils
 from captioner.captioning_backend import CropUpdateSource
+
 
 class PlatformType(Enum):
     WHEELCHAIR = 'wheelchair'
@@ -64,12 +67,20 @@ class LanguagePlanner(Node):
         self.object_query_pub = self.create_publisher(String, '/object_query', 5)
         self.object_marker_pub = self.create_publisher(Marker, '/selected_object_marker', 5)
 
-        self.pose_sub = self.create_subscription(Odometry, '/mavros/vision_pose/pose', self.handle_pose, 1, callback_group=MutuallyExclusiveCallbackGroup())
-        self.map_sub = self.create_subscription(PointCloud2, '/cloud_registered', self.handle_map, 1, callback_group=MutuallyExclusiveCallbackGroup())
-        self.freespace_sub = self.create_subscription(PointCloud2, '/traversable_area', self.handle_freespace, 1, callback_group=MutuallyExclusiveCallbackGroup())
+        self.callback_group = ReentrantCallbackGroup()
+        self.pose_sub = self.create_subscription(Odometry, '/mavros/vision_pose/pose', self.handle_pose, 1, callback_group=self.callback_group)
+        self.map_sub = self.create_subscription(PointCloud2, '/cloud_registered', self.handle_map, 1, callback_group=self.callback_group)
+        self.freespace_sub = self.create_subscription(PointCloud2, '/traversable_area', self.handle_freespace, 1, callback_group=self.callback_group)
 
-        self.caption_sub = self.create_subscription(String, '/queried_captions', self.handle_captions, 1, callback_group=MutuallyExclusiveCallbackGroup())
-        self.planner_query_sub = self.create_subscription(String, '/language_planner_query', self.handle_language_query, 1, callback_group=MutuallyExclusiveCallbackGroup())
+        self.caption_sub = self.create_subscription(String, '/queried_captions', self.handle_captions, 1, callback_group=self.callback_group)
+        self.planner_query_sub = self.create_subscription(String, '/language_planner_query', self.handle_language_query, 1, callback_group=self.callback_group)
+
+        # self.pose_sub = self.create_subscription(Odometry, '/mavros/vision_pose/pose', self.handle_pose, 1, callback_group=MutuallyExclusiveCallbackGroup())
+        # self.map_sub = self.create_subscription(PointCloud2, '/cloud_registered', self.handle_map, 1, callback_group=MutuallyExclusiveCallbackGroup())
+        # self.freespace_sub = self.create_subscription(PointCloud2, '/traversable_area', self.handle_freespace, 1, callback_group=MutuallyExclusiveCallbackGroup())
+
+        # self.caption_sub = self.create_subscription(String, '/queried_captions', self.handle_captions, 1, callback_group=MutuallyExclusiveCallbackGroup())
+        # self.planner_query_sub = self.create_subscription(String, '/language_planner_query', self.handle_language_query, 1, callback_group=MutuallyExclusiveCallbackGroup())
 
         # Variable Initialization
 
@@ -77,7 +88,6 @@ class LanguagePlanner(Node):
         self.cur_vel = np.array([0., 0., 0.])
         self.map_pcl: np.ndarray = None
         self.freespace_pcl: np.ndarray = None
-
         self.target_waypoints = []
         self.target_ids = []
 
@@ -233,7 +243,7 @@ class LanguagePlanner(Node):
             repeats = 5
             for k in range(repeats):
                 self.publish_waypoint(closest_point)
-                sleep(0.01)
+                time.sleep(0.01)
 
             self.log_info(f"Navigating... ({i+1}/{len(waypoints)})")
             while rclpy.ok():
@@ -260,19 +270,42 @@ class LanguagePlanner(Node):
 
 
     def handle_language_query(self, msg: String):
-
         self.log_info(f'Query received: {msg.data}')
 
+        # --- 核心修复：如果内存里没地图，尝试从磁盘加载 ---
         if self.freespace_pcl is None:
-            self.log_info("No freespace map received")
-            return
+            
+            # 必须使用与保存时完全一致的【绝对路径】
+            map_path = os.path.join(os.path.expanduser("~"), "hm/ros2_ws/maps/freespace_map.ply")
+            
+            if os.path.exists(map_path):
+                self.log_info(f"DEBUG >>> 正在从磁盘加载已保存的地图: {map_path}")
+                try:
+                    pcd = o3d.io.read_point_cloud(map_path)
+                    self.freespace_pcl = np.asarray(pcd.points)
+                    # self.log_info(f"DEBUG >>> 成功加载地图点数: {len(self.freespace_pcl)}")
+                    # self.log_info(f"DEBUG >>> 地图范围: X({self.freespace_pcl[:,0].min():.2f}~{self.freespace_pcl[:,0].max():.2f}), "
+                    # f"Y({self.freespace_pcl[:,1].min():.2f}~{self.freespace_pcl[:,1].max():.2f}), "
+                    # f"Z({self.freespace_pcl[:,2].min():.2f}~{self.freespace_pcl[:,2].max():.2f})")
+                except Exception as e:
+                    self.log_info(f"DEBUG >>> 加载地图失败: {e}")
+            else:
+                self.log_info(f"Error: 话题没数据，且在 {map_path} 找不到保存的文件！")
+                return
 
+        if self.map_pcl is None:
+            obs_path = os.path.join(os.path.expanduser("~"), "hm/ros2_ws/maps/map_obstacles.ply")
+            if os.path.exists(obs_path):
+                self.log_info(f"DEBUG >>> 正在加载障碍物地图: {obs_path}")
+                pcd_obs = o3d.io.read_point_cloud(obs_path)
+                self.map_pcl = np.asarray(pcd_obs.points)
+        
         input_statement = msg.data
 
         self.clear_object_markers()
 
         obj_query_list = self.language_planner_backend.get_object_references(input_statement)
-        sleep(1)
+        time.sleep(1)
 
         self.log_info(f'Parsed objects: {obj_query_list}')
 
@@ -289,7 +322,9 @@ class LanguagePlanner(Node):
             self.query_objects(["GET_ALL"])
             self.log_info("Queried objects")
             while rclpy.ok() and self.obj_query_response_echo != ["GET_ALL"]:
-                pass
+                # pass
+                time.sleep(0.1)
+            self.log_info("Response received! Proceeding to LLM planning...")
             
             # 这里的 self.object_dict 键是字符串 (来自 JSON)
             raw_object_dict = self.object_dict 
