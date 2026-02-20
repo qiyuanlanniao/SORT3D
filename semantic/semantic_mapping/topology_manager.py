@@ -9,6 +9,12 @@ from sensor_msgs.msg import PointCloud2
 import networkx as nx
 from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import ColorRGBA
+FUNCTIONAL_RELATIONSHIPS = [
+    ("table", "chair"),      # 餐桌/办公组
+    ("table", "screen"),     # 电脑位
+    ("whiteboard", "chair"), # 会议组
+    ("cabinet", "cabinet")   # 连排柜子
+]
 
 class TopologyManager(Node):
     def __init__(self):
@@ -137,73 +143,94 @@ class TopologyManager(Node):
             if dist < max(radius, 3.0): 
                 self.graph.add_edge(obj_id, place_id)
 
-    def reconcile_object_to_places(self):
-        """
-        全局对齐：确保每个物体【仅连接】一个最近的地点
-        """
-        obj_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'object']
-        place_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'place']
-        
-        if not obj_nodes or not place_nodes: return
-
-        # 提取地点坐标
-        p_ids = []
-        p_coords = []
-        for p in place_nodes:
-            p_ids.append(p)
-            p_coords.append(self.graph.nodes[p]['pos'])
-        p_coords = np.array(p_coords)
-
-        for o_id in obj_nodes:
-            # --- 核心改进：先删除该物体现有的所有【地点】连接 ---
-            current_neighbors = list(self.graph.neighbors(o_id))
-            for nbr in current_neighbors:
-                if self.graph.nodes[nbr].get('type') == 'place':
-                    self.graph.remove_edge(o_id, nbr)
-
-            # --- 寻找最近的唯一地点 ---
-            o_pos = self.graph.nodes[o_id]['pos']
-            dists = np.linalg.norm(p_coords - o_pos, axis=1)
-            min_idx = np.argmin(dists)
-            
-            # 只建立这一条最短的边
-            self.graph.add_edge(o_id, p_ids[min_idx])
-
     def generate_hierarchy_description(self):
         """
-        微调：过滤掉没有有效分类的物体输出
+        第三步：导出 Room -> Group -> Object 的三级深度语义树
         """
-        lines = ["Current Scene Hierarchy (Detailed):"]
+        lines = ["=== Hierarchical Scene Graph (H-CoT Format) ==="]
         room_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'room']
         
-        for r_id in room_nodes:
-            r_pos = self.graph.nodes[r_id]['pos']
-            r_pos_list = [round(float(x), 2) for x in r_pos]
-            lines.append(f"- {r_id} (pos center: {r_pos_list})")
+        for r_id in sorted(room_nodes):
+            r_label = self.graph.nodes[r_id].get('label', r_id)
+            lines.append(f"\n[Room]: {r_label}")
 
-            objects_in_room = []
-            associated_places = [n for n in self.graph.neighbors(r_id) if self.graph.nodes[n].get('type') == 'place']
-            
-            for p_id in associated_places:
-                for neighbor in self.graph.neighbors(p_id):
-                    node_data = self.graph.nodes[neighbor]
-                    if node_data.get('type') == 'object':
-                        label_raw = node_data.get('label', '{}')
-                        try:
-                            label_dict = ast.literal_eval(label_raw)
-                            if not label_dict: continue # 过滤空字典
-                            best_label = max(label_dict, key=label_dict.get)
-                            # 提取原始数字 ID
-                            obj_unique_id = neighbor.split('_')[-1]
-                            pos = node_data.get('pos', [0, 0, 0])
-                            obj_info = f"{{'{best_label}':id: {obj_unique_id},pos center: [{pos[0]:.2f}, {pos[1]:.2f}, {pos[2]:.2f}]}}"
-                            objects_in_room.append(obj_info)
-                        except: continue
-            
-            for obj_line in sorted(list(set(objects_in_room))):
-                lines.append(f"    {obj_line}")
+            # 1. 获取该房间内的所有组
+            # 逻辑：Room -> Place -> Object -> Group
+            room_groups = set()
+            room_places = [n for n in self.graph.neighbors(r_id) if self.graph.nodes[n].get('type') == 'place']
+            for p_id in room_places:
+                for obj_nbr in self.graph.neighbors(p_id):
+                    if self.graph.nodes[obj_nbr].get('type') == 'object':
+                        # 找到物体所属的组
+                        for g_nbr in self.graph.neighbors(obj_nbr):
+                            if self.graph.nodes[g_nbr].get('type') == 'group':
+                                room_groups.add(g_nbr)
+
+            # 2. 打印组及组内物体
+            for g_id in sorted(list(room_groups)):
+                g_label = self.graph.nodes[g_id].get('label', g_id)
+                member_objs = [n for n in self.graph.neighbors(g_id) if self.graph.nodes[n].get('type') == 'object']
                 
+                obj_strings = []
+                for o_id in member_objs:
+                    label_raw = self.graph.nodes[o_id].get('label', '{}')
+                    # 使用之前的多数票逻辑简化显示
+                    try:
+                        l_dict = ast.literal_eval(label_raw)
+                        best_l = max(l_dict, key=l_dict.get) if l_dict else "item"
+                    except: best_l = "item"
+                    obj_strings.append(f"{best_l}(#{o_id.split('_')[-1]})")
+                
+                lines.append(f"  |- [Group]: {g_label} contains: {', '.join(obj_strings)}")
+
+            # 3. 打印房间内不属于任何组的“孤立物体”
+            standalone_objs = []
+            for p_id in room_places:
+                for obj_nbr in self.graph.neighbors(p_id):
+                    if self.graph.nodes[obj_nbr].get('type') == 'object':
+                        # 检查是否有家长组
+                        has_group = any(self.graph.nodes[n].get('type') == 'group' for n in self.graph.neighbors(obj_nbr))
+                        if not has_group:
+                            try:
+                                l_dict = ast.literal_eval(self.graph.nodes[obj_nbr].get('label', '{}'))
+                                best_l = max(l_dict, key=l_dict.get) if l_dict else "item"
+                            except: best_l = "item"
+                            standalone_objs.append(f"{best_l}(#{obj_nbr.split('_')[-1]})")
+            
+            if standalone_objs:
+                lines.append(f"  |- [Standalone]: {', '.join(list(set(standalone_objs)))}")
+
         return "\n".join(lines)
+    
+    def get_node_context(self, node_id):
+        """
+        SG-Nav 核心：提取某个节点的局部上下文（邻居物体、所属组、所属房间）
+        """
+        if node_id not in self.graph: return "Node not found."
+        
+        data = self.graph.nodes[node_id]
+        context = {
+            "id": node_id,
+            "type": data.get('type'),
+            "label": data.get('label'),
+            "neighbors": [],
+            "parent_room": None
+        }
+
+        # 1. 找物理邻居 (同层剪枝后的 Object)
+        for nbr in self.graph.neighbors(node_id):
+            nbr_data = self.graph.nodes[nbr]
+            if nbr_data.get('type') == 'object':
+                context["neighbors"].append(nbr_data.get('label'))
+            
+            # 2. 找逻辑家长 (Room)
+            # 路径：Object -> Place -> Room
+            if nbr_data.get('type') == 'place':
+                for p_parent in self.graph.neighbors(nbr):
+                    if self.graph.nodes[p_parent].get('type') == 'room':
+                        context["parent_room"] = self.graph.nodes[p_parent].get('label')
+
+        return context
     
     def anti_neck_merge(self, cores, place_nodes, delta):
         """
@@ -387,7 +414,7 @@ class TopologyManager(Node):
     
     def graph_analysis_callback(self):
         # 1. 首先确保物体和地点已经连上
-        self.reconcile_object_to_places()
+        # self.reconcile_object_to_places()
 
         self.reinforce_graph_connectivity()
 
@@ -454,6 +481,8 @@ class TopologyManager(Node):
         # 在应用新划分前，清理旧的 Room 和 Building 边
         self.clear_hierarchical_edges()
 
+        self.generate_functional_groups(dist_threshold=1.5)
+
         raw_cores = clusters_at_threshold.get(optimal_delta, [set(place_nodes)])
 
         final_cores = self.anti_neck_merge(
@@ -493,7 +522,8 @@ class TopologyManager(Node):
                             changed = True
                             break
 
-
+        self.link_hierarchy_to_rooms()
+        self.prune_scene_graph_edges()
         # --- 5. 顶层 Building 关联 ---
         self.update_building_layer()
         # for n, d in self.graph.nodes(data=True):
@@ -506,11 +536,11 @@ class TopologyManager(Node):
         self.publish_graph_to_rviz()
 
     def clear_hierarchical_edges(self):
-        """清理旧的跨层边，防止线条杂乱"""
         edges_to_remove = []
         for u, v in self.graph.edges():
             types = [self.graph.nodes[u].get('type'), self.graph.nodes[v].get('type')]
-            if 'room' in types or 'building' in types:
+            # 增加对 group 类型的清理
+            if 'room' in types or 'building' in types or 'group' in types:
                 edges_to_remove.append((u, v))
         self.graph.remove_edges_from(edges_to_remove)
 
@@ -529,10 +559,12 @@ class TopologyManager(Node):
         d = self.graph.nodes[node_id]
         pos = d.get('pos', np.array([0., 0., 0.]))
         p = Point(x=float(pos[0]), y=float(pos[1]))
+        
         if d['type'] == 'building': p.z = self.HEIGHT_BUILDING
         elif d['type'] == 'room': p.z = self.HEIGHT_ROOMS
         elif d['type'] == 'place': p.z = self.HEIGHT_PLACES
-        else: p.z = float(pos[2])
+        elif d['type'] == 'group': p.z = float(pos[2]) + 0.2 # 组中心比物体稍高一点，方便区分
+        else: p.z = float(pos[2]) # Object 保持原始高度
         return p
 
     def publish_graph_to_rviz(self):
@@ -593,9 +625,22 @@ class TopologyManager(Node):
                 line.points.extend([p1, p2])
                 
                 tu, tv = self.graph.nodes[u]['type'], self.graph.nodes[v]['type']
+                
                 c = ColorRGBA(r=0.8, g=0.8, b=0.8, a=0.1) # 默认淡灰色
 
-                # --- 核心改进逻辑开始 ---
+                edge_data = self.graph.get_edge_data(u, v)
+        
+                # --- 【核心修改：组内连线着色】 ---
+                if edge_data.get('edge_type') == 'intra_group':
+                    # 这种边两端都是 Object，我们取其中一个 Object 的所属房间颜色
+                    c = ColorRGBA(r=0.5, g=0.5, b=0.5, a=0.9) # 默认较深的灰
+                    for node in [u, v]:
+                        for nbr in self.graph.neighbors(node):
+                            if self.graph.nodes[nbr].get('type') == 'place':
+                                rid = p_to_r.get(nbr)
+                                if rid:
+                                    c = r_colors[rid]
+                                    break
                 
                 # 情况 1: Building - Room 连线 (深色)
                 if 'building' in [tu, tv]:
@@ -634,6 +679,189 @@ class TopologyManager(Node):
 
         ma.markers.append(line)
         self.viz_pub.publish(ma)
+    
+    def generate_functional_groups(self, dist_threshold=1.5):
+        """
+        第一步：根据语义字典和距离，将物体聚合成组 (Layer 2.5)
+        """
+        obj_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'object']
+        if len(obj_nodes) < 2: return
+
+        # 1. 寻找符合语义和空间条件的物体对
+        potential_groups = []
+        for i in range(len(obj_nodes)):
+            for j in range(i + 1, len(obj_nodes)):
+                u, v = obj_nodes[i], obj_nodes[j]
+                label_u = self.graph.nodes[u].get('label', '')
+                label_v = self.graph.nodes[v].get('label', '')
+                
+                # 检查语义是否相关
+                is_related = False
+                for r1, r2 in FUNCTIONAL_RELATIONSHIPS:
+                    if (r1 in label_u and r2 in label_v) or (r2 in label_u and r1 in label_v):
+                        is_related = True
+                        break
+                
+                if is_related:
+                    # 检查距离
+                    dist = np.linalg.norm(self.graph.nodes[u]['pos'] - self.graph.nodes[v]['pos'])
+                    if dist < dist_threshold:
+                        potential_groups.append((u, v))
+
+        # 2. 使用并查集或连通分量将物体对合并成组
+        group_graph = nx.Graph()
+        group_graph.add_edges_from(potential_groups)
+        clusters = list(nx.connected_components(group_graph))
+
+        for i, cluster in enumerate(clusters):
+            group_id = f"group_{i}"
+            # 计算组的中心位置
+            group_pos = np.mean([self.graph.nodes[obj]['pos'] for obj in cluster], axis=0)
+            
+            # 添加组节点
+            if not self.graph.has_node(group_id):
+                self.graph.add_node(group_id, type='group', pos=group_pos, label=f"Group {i}")
+            else:
+                self.graph.nodes[group_id]['pos'] = group_pos
+            
+            cluster_list = list(cluster)
+            # --- 【核心修改】 ---
+            # 除了 Object -> Group，还增加 Object <-> Object 的横向连接
+            # 我们给这种边加一个属性，方便在可视化时单独着色
+            for idx_a in range(len(cluster_list)):
+                for idx_b in range(idx_a + 1, len(cluster_list)):
+                    u, v = cluster_list[idx_a], cluster_list[idx_b]
+                    self.graph.add_edge(u, v, edge_type='intra_group') 
+    
+    def link_hierarchy_to_rooms(self):
+        """
+        第二步：基于几何球体范围判定物体属于哪个房间
+        """
+        obj_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'object']
+        place_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'place']
+        room_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'room']
+
+        if not obj_nodes or not place_nodes: return
+
+        for o_id in obj_nodes:
+            o_pos = self.graph.nodes[o_id]['pos']
+            
+            # 1. 核心改进：几何重叠检查
+            # 检查物体中心是否落在任何房间的“势力范围”（即所属地点的球体）内
+            found_room = None
+            best_p_id = None
+            
+            # 遍历所有房间
+            for r_id in room_nodes:
+                # 获取该房间包含的所有地点节点
+                r_places = [p for p in self.graph.neighbors(r_id) if self.graph.nodes[p].get('type') == 'place']
+                
+                for p_id in r_places:
+                    p_data = self.graph.nodes[p_id]
+                    dist = np.linalg.norm(o_pos - p_data['pos'])
+                    # 如果物体在地点球体内（半径内），则确定归属
+                    # 考虑到物体可能有体积，我们给半径加 0.5m 的容差
+                    if dist < (p_data.get('radius', 0.5) + 0.5):
+                        found_room = r_id
+                        best_p_id = p_id
+                        break
+                if found_room: break
+
+            # 2. 如果几何检查失败（物体在球体缝隙中），退回到原有的最近地点逻辑
+            if not found_room:
+                # 执行你之前的对齐逻辑（找全局最近的 Place）
+                # 为了简化，我们直接调用现有的 reconcile
+                self.reconcile_single_object(o_id)
+            else:
+                # 如果几何检查成功，强制将物体连接到该房间内的那个地点
+                # 先清除旧边
+                for nbr in list(self.graph.neighbors(o_id)):
+                    if self.graph.nodes[nbr].get('type') == 'place':
+                        self.graph.remove_edge(o_id, nbr)
+                self.graph.add_edge(o_id, best_p_id)
+    
+    def reconcile_single_object(self, o_id):
+        """对单个物体进行最近邻对齐"""
+        place_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'place']
+        if not place_nodes: return
+        
+        o_pos = self.graph.nodes[o_id]['pos']
+        p_coords = np.array([self.graph.nodes[p]['pos'] for p in place_nodes])
+        
+        dists = np.linalg.norm(p_coords - o_pos, axis=1)
+        min_idx = np.argmin(dists)
+        
+        # 清除旧边并连接最近地点
+        for nbr in list(self.graph.neighbors(o_id)):
+            if self.graph.nodes[nbr].get('type') == 'place':
+                self.graph.remove_edge(o_id, nbr)
+        self.graph.add_edge(o_id, place_nodes[min_idx])
+    
+    def is_path_obstructed(self, pos_a, pos_b, tree, step=0.2):
+        """
+        几何长程校验：检查 pos_a 和 pos_b 连线上是否有障碍物 (点云)
+        """
+        vec = pos_b - pos_a
+        dist = np.linalg.norm(vec)
+        if dist < step: return False
+        
+        unit_vec = vec / dist
+        # 在连线上进行步进采样检测
+        for d in np.arange(step, dist, step):
+            check_pt = pos_a + unit_vec * d
+            # 查询采样点周围 0.15m 内是否有障碍物点云
+            dists, _ = tree.query(check_pt, k=1)
+            if dists < 0.15: # 发现障碍物
+                return True
+        return False
+    
+    def prune_scene_graph_edges(self):
+        """
+        场景图剪枝 (Step 2.5): 过滤掉不合理的连接
+        """
+        edges_to_remove = []
+        # 获取最新的障碍物树
+        if self.latest_cloud_msg is None: return
+        points = pc2.read_points_numpy(self.latest_cloud_msg, field_names=("x", "y", "z"))
+        if len(points) == 0: return
+        obstacle_tree = KDTree(points)
+
+        # 遍历图中所有的 [Object <-> Object] 边
+        obj_edges = [(u, v) for u, v, d in self.graph.edges(data=True) if d.get('edge_type') == 'intra_group']
+        
+        for u, v in obj_edges:
+            pos_u = self.graph.nodes[u]['pos']
+            pos_v = self.graph.nodes[v]['pos']
+            
+            # --- 1. 几何长程剪枝规则 ---
+            # 规则 A: 必须在同一个房间 (利用已有的 node_to_room 逻辑)
+            room_u = next((n for n in self.graph.neighbors(u) if self.graph.nodes[n].get('type')=='room'), None)
+            room_v = next((n for n in self.graph.neighbors(v) if self.graph.nodes[n].get('type')=='room'), None)
+            
+            if room_u != room_v:
+                edges_to_remove.append((u, v))
+                continue
+
+            # 规则 B: 连线上不能有墙 (视线遮挡检查)
+            if self.is_path_obstructed(pos_u, pos_v, obstacle_tree):
+                edges_to_remove.append((u, v))
+                continue
+
+            # --- 2. VLM 短程剪枝逻辑 (模拟) ---
+            # 如果两个物体极近 (< 0.5m)，且类别逻辑不通（如柜子和墙画重合），则剪枝
+            dist = np.linalg.norm(pos_u - pos_v)
+            if dist < 0.5:
+                label_u = self.graph.nodes[u].get('label', '')
+                label_v = self.graph.nodes[v].get('label', '')
+                # 这里可以扩展：如果你的 A6000 跑了 LLaVA，可以调用并询问是否真实共存
+                # 目前采用逻辑过滤：如果两个静态大件重合，通常是感知错误
+                if 'cabinet' in label_u and 'cabinet' in label_v:
+                    # 连排柜子是允许的，不剪枝
+                    pass
+
+        self.graph.remove_edges_from(edges_to_remove)
+        if edges_to_remove:
+            self.get_logger().info(f"✂️ [Pruning] 已剪除 {len(edges_to_remove)} 条不合理连线")
 
 def main(args=None):
     rclpy.init(args=args)
