@@ -8,7 +8,7 @@ class GridMapHandler:
         self.origin = origin
 
     def create_2d_map(self, points, freespace, resolution=0.25):
-        points_2d = points[:, :2]
+        points_2d = points[:, :2].copy()
         points_2d[:, 1] = -points_2d[:, 1]
 
         min_x = np.min(points_2d[:, 0])
@@ -35,21 +35,17 @@ class GridMapHandler:
 
         freespace_idxs = np.round(freespace_normed).astype(int)
 
-        # filter freespace points
-        height_oob = np.argwhere(freespace_idxs[:, 0] >= height)
-        width_oob = np.argwhere(freespace_idxs[:, 1] >= width)
-        print("height oob", height_oob)
-        print("width oob", width_oob)
-        if height_oob.size != 0:
-            freespace_idxs = np.delete(freespace_idxs, height_oob, axis=0)
-        
-        if width_oob.size != 0:
-            freespace_idxs = np.delete(freespace_idxs, width_oob, axis=0)
+        width# 同时检查上限和下限（防止出现 -77 这种负数索引）
+        valid_mask = (freespace_idxs[:, 0] >= 0) & (freespace_idxs[:, 0] < height) & \
+                     (freespace_idxs[:, 1] >= 0) & (freespace_idxs[:, 1] < width)
 
-        print("freespace, ", freespace.shape)
-        print("freespace idx ", freespace_idxs.shape)
-        
-        self.grid_map[freespace_idxs[:, 0], freespace_idxs[:, 1]] = 0
+        # 仅保留在地图范围内的点
+        filtered_idxs = freespace_idxs[valid_mask]
+
+        if filtered_idxs.size > 0:
+            # 只有合法的索引才会写入，彻底解决 IndexError
+            self.grid_map[filtered_idxs[:, 0], filtered_idxs[:, 1]] = 0
+
     
         self.origin = np.array([min_x, min_y])
 

@@ -60,7 +60,8 @@ class LanguagePlannerBackend:
             map_pcl: np.ndarray,
             freespace_pcl: np.ndarray,
             object_dict: dict,
-            cur_pos: np.ndarray):
+            cur_pos: np.ndarray,
+            scene_hierarchy: str = ""):
 
         if not object_dict:
             return [], [], [], ""
@@ -74,7 +75,7 @@ class LanguagePlannerBackend:
         )
 
         # Simplify object IDs for potential ease of LLM tokenization
-        object_id_map = {relative_id: absolute_id for relative_id, absolute_id in enumerate(object_dict.keys()) if absolute_id != -1} 
+        object_id_map = {int(k): int(k) for k in object_dict.keys()}
         object_id_map[-1] = -1
 
         self.log_info(f'Obj id map: {object_id_map}')
@@ -87,23 +88,25 @@ class LanguagePlannerBackend:
 
         robot_coords = self.grid_map_handler.convert_global_to_grid([cur_pos])
 
-        # get info for relevant objects
-        filtered_objects_out = [
-            [
-                absolute_id,
-                relative_id,
+        filtered_objects_out = []
+        for (absolute_id, obj), grid_coord in zip(object_dict.items(), grid_coords):
+            # 我们将绝对 ID 放在前两个位置，以兼容原始代码的索引习惯
+            entry = [
+                int(absolute_id),  # 原始 absolute_id
+                int(absolute_id),  # 原始 relative_id (现在直接用绝对ID代替)
                 obj['name'], 
                 obj['caption'],
                 grid_coord[0],
                 grid_coord[1],
                 grid_coord[2],
                 obj['largest_face']
-                ] for (relative_id, absolute_id), obj, grid_coord in zip(object_id_map.items(), object_dict.values(), grid_coords)]
+            ]
+            filtered_objects_out.append(entry)
 
-        filtered_objects_llm = [filtered_obj[1:] for filtered_obj in filtered_objects_out]
-        
+        # 传给 LLM 的列表（去掉第一列 absolute_id，保留从 ID 开始的后面部分）
+        filtered_objects_llm = [obj[1:] for obj in filtered_objects_out]
 
-        # call LLM agent to process query
+        # 调用 LLM agent
         output_code = self.llm_handler.generate_query(
             environment_name,
             self.grid_map_handler.grid_map.shape,
@@ -112,16 +115,15 @@ class LanguagePlannerBackend:
             input_statement,
             object_dict,
             map_pcl,
-            freespace_pcl
+            freespace_pcl,
+            scene_hierarchy=scene_hierarchy
         )
         
-
-        # self.log_info(f'{output_code}')
         self.log_info("output code")
         self.log_info(f'{output_code}')
 
         waypoints, ids = self.parse_code(output_code, object_dict, object_id_map)
 
+        # 确保这里返回的是刚刚定义的 filtered_objects_out
         return waypoints, ids, filtered_objects_out, output_code
-
 

@@ -8,7 +8,7 @@ from geometry_msgs.msg import PoseStamped, Point
 from sensor_msgs.msg import PointCloud2
 import networkx as nx
 from visualization_msgs.msg import Marker, MarkerArray
-from std_msgs.msg import ColorRGBA
+from std_msgs.msg import String, ColorRGBA
 FUNCTIONAL_RELATIONSHIPS = [
     ("table", "chair"),      # 餐桌/办公组
     ("table", "screen"),     # 电脑位
@@ -51,6 +51,8 @@ class TopologyManager(Node):
 
         self.loop_closure_dist = 1.5  # 判定回环的物理距离阈值
         self.loop_closure_min_id_diff = 15  # 只有当 ID 差值较大时才认为是回环，防止和邻居误触发
+
+        self.hierarchy_pub = self.create_publisher(String, '/scene_hierarchy_description', 10)
 
     def cloud_callback(self, msg):
         self.latest_cloud_msg = msg
@@ -179,7 +181,7 @@ class TopologyManager(Node):
                         l_dict = ast.literal_eval(label_raw)
                         best_l = max(l_dict, key=l_dict.get) if l_dict else "item"
                     except: best_l = "item"
-                    obj_strings.append(f"{best_l}(#{o_id.split('_')[-1]})")
+                    obj_strings.append(f"{best_l}(ID:{o_id.split('_')[-1]})")
                 
                 lines.append(f"  |- [Group]: {g_label} contains: {', '.join(obj_strings)}")
 
@@ -195,7 +197,7 @@ class TopologyManager(Node):
                                 l_dict = ast.literal_eval(self.graph.nodes[obj_nbr].get('label', '{}'))
                                 best_l = max(l_dict, key=l_dict.get) if l_dict else "item"
                             except: best_l = "item"
-                            standalone_objs.append(f"{best_l}(#{obj_nbr.split('_')[-1]})")
+                            standalone_objs.append(f"{best_l}(ID:{obj_nbr.split('_')[-1]})")
             
             if standalone_objs:
                 lines.append(f"  |- [Standalone]: {', '.join(list(set(standalone_objs)))}")
@@ -534,6 +536,13 @@ class TopologyManager(Node):
         connectivity_description = self.generate_room_connectivity_description()
         self.get_logger().info(f"--- Room Connectivity Description ---\n{connectivity_description}\n--------------------------------")
         self.publish_graph_to_rviz()
+        msg = String()
+        msg.data = hierarchy_description
+        self.hierarchy_pub.publish(msg)
+        save_path = "/home/iot/hm/ros2_ws/maps/latest_scene_graph.txt"
+        with open(save_path, "w") as f:
+            f.write(hierarchy_description)
+        self.get_logger().info(f"💾 层级结构已保存至 {save_path}")
 
     def clear_hierarchical_edges(self):
         edges_to_remove = []

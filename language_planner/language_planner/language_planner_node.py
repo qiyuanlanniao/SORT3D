@@ -75,14 +75,15 @@ class LanguagePlanner(Node):
         self.caption_sub = self.create_subscription(String, '/queried_captions', self.handle_captions, 1, callback_group=self.callback_group)
         self.planner_query_sub = self.create_subscription(String, '/language_planner_query', self.handle_language_query, 1, callback_group=self.callback_group)
 
-        # self.pose_sub = self.create_subscription(Odometry, '/mavros/vision_pose/pose', self.handle_pose, 1, callback_group=MutuallyExclusiveCallbackGroup())
-        # self.map_sub = self.create_subscription(PointCloud2, '/cloud_registered', self.handle_map, 1, callback_group=MutuallyExclusiveCallbackGroup())
-        # self.freespace_sub = self.create_subscription(PointCloud2, '/traversable_area', self.handle_freespace, 1, callback_group=MutuallyExclusiveCallbackGroup())
+        # 订阅来自 TopologyManager 的层级描述
+        self.hierarchy_sub = self.create_subscription(
+            String, 
+            '/scene_hierarchy_description', 
+            self.handle_hierarchy, 
+            1, 
+            callback_group=self.callback_group)
 
-        # self.caption_sub = self.create_subscription(String, '/queried_captions', self.handle_captions, 1, callback_group=MutuallyExclusiveCallbackGroup())
-        # self.planner_query_sub = self.create_subscription(String, '/language_planner_query', self.handle_language_query, 1, callback_group=MutuallyExclusiveCallbackGroup())
-
-        # Variable Initialization
+        self.latest_hierarchy = "" # 用于暂存层级信息
 
         self.cur_pos = np.array([0., 0., 0.])
         self.cur_vel = np.array([0., 0., 0.])
@@ -104,7 +105,8 @@ class LanguagePlanner(Node):
         self.object_dict = {}
         self.obj_query_response_echo = []
 
-    
+    def handle_hierarchy(self, msg: String):
+        self.latest_hierarchy = msg.data
     
     def handle_pose(self, msg: PoseStamped):
         self.cur_pos[0] = msg.pose.position.x
@@ -272,33 +274,50 @@ class LanguagePlanner(Node):
     def handle_language_query(self, msg: String):
         self.log_info(f'Query received: {msg.data}')
 
-        # --- 核心修复：如果内存里没地图，尝试从磁盘加载 ---
+        # 定义统一的地图存放目录
+        maps_dir = os.path.join(os.path.expanduser("~"), "hm/ros2_ws/maps")
+
+        # 1. 检查并加载【可通行区域地图】 (Freespace)
         if self.freespace_pcl is None:
-            
-            # 必须使用与保存时完全一致的【绝对路径】
-            map_path = os.path.join(os.path.expanduser("~"), "hm/ros2_ws/maps/freespace_map.ply")
-            
+            map_path = os.path.join(maps_dir, "freespace_map.ply")
             if os.path.exists(map_path):
-                self.log_info(f"DEBUG >>> 正在从磁盘加载已保存的地图: {map_path}")
+                self.log_info(f"📂 [Offline Mode] 正在加载可通行地图: {map_path}")
                 try:
                     pcd = o3d.io.read_point_cloud(map_path)
                     self.freespace_pcl = np.asarray(pcd.points)
-                    # self.log_info(f"DEBUG >>> 成功加载地图点数: {len(self.freespace_pcl)}")
-                    # self.log_info(f"DEBUG >>> 地图范围: X({self.freespace_pcl[:,0].min():.2f}~{self.freespace_pcl[:,0].max():.2f}), "
-                    # f"Y({self.freespace_pcl[:,1].min():.2f}~{self.freespace_pcl[:,1].max():.2f}), "
-                    # f"Z({self.freespace_pcl[:,2].min():.2f}~{self.freespace_pcl[:,2].max():.2f})")
                 except Exception as e:
-                    self.log_info(f"DEBUG >>> 加载地图失败: {e}")
+                    self.log_info(f"❌ 加载可通行地图失败: {e}")
             else:
-                self.log_info(f"Error: 话题没数据，且在 {map_path} 找不到保存的文件！")
+                self.log_info(f"⚠️ 话题无数据且在 {map_path} 找不到文件")
                 return
 
+        # 2. 检查并加载【障碍物地图】 (Obstacles)
         if self.map_pcl is None:
-            obs_path = os.path.join(os.path.expanduser("~"), "hm/ros2_ws/maps/map_obstacles.ply")
+            obs_path = os.path.join(maps_dir, "map_pcl.ply") # 统一命名为 map_pcl.ply
             if os.path.exists(obs_path):
-                self.log_info(f"DEBUG >>> 正在加载障碍物地图: {obs_path}")
-                pcd_obs = o3d.io.read_point_cloud(obs_path)
-                self.map_pcl = np.asarray(pcd_obs.points)
+                self.log_info(f"📂 [Offline Mode] 正在加载障碍物地图: {obs_path}")
+                try:
+                    pcd_obs = o3d.io.read_point_cloud(obs_path)
+                    self.map_pcl = np.asarray(pcd_obs.points)
+                except Exception as e:
+                    self.log_info(f"❌ 加载障碍物地图失败: {e}")
+            else:
+                self.log_info(f"⚠️ 话题无数据且在 {obs_path} 找不到文件")
+                # 提示：即使没有障碍物地图，有些规划器也能跑，但建议保留
+
+        # 3. 检查并加载【DSG层级结构描述】 (Scene Hierarchy)
+        if not self.latest_hierarchy: # 检查字符串是否为空
+            hierarchy_path = os.path.join(maps_dir, "latest_scene_graph.txt")
+            if os.path.exists(hierarchy_path):
+                self.log_info(f"📂 [Offline Mode] 正在加载层级结构文件: {hierarchy_path}")
+                try:
+                    with open(hierarchy_path, "r") as f:
+                        self.latest_hierarchy = f.read()
+                except Exception as e:
+                    self.log_info(f"❌ 加载层级文件失败: {e}")
+            else:
+                self.log_info(f"❌ 严重错误：找不到层级描述文件 {hierarchy_path}，LLM 将失去上下文！")
+                return
         
         input_statement = msg.data
 
@@ -346,17 +365,16 @@ class LanguagePlanner(Node):
             object_dict = new_object_dict
 
             
-        # self.log_info(f'{object_dict}')
-
+        # 修改 generate_plan 的调用，传入最新的层级信息
         self.target_waypoints, self.target_ids, filtered_objects_out, output_code = self.language_planner_backend.generate_plan(
             self.environment_name,
             input_statement,
             self.map_pcl,
             self.freespace_pcl,
             object_dict,
-            self.cur_pos
+            self.cur_pos,
+            scene_hierarchy=self.latest_hierarchy 
         )
-
         self.log_info(output_code)
         self.log_llm_output(input_statement, output_code)
 

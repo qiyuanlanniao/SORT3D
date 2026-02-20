@@ -35,7 +35,7 @@ class CodeParser:
                 obj_num = re.findall(r'\d+', obj)[-1]
                 print("obj num", obj, obj_num)
                 try:
-                    true_obj_id = object_id_map[int(obj)]
+                    true_obj_id = int(obj)
                     waypoints.append(self.go_near(true_obj_id, object_dict))
                     ids.append([true_obj_id])
                     continue

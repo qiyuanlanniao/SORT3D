@@ -189,26 +189,39 @@ class LLMQueryHandler:
             input_query: str,
             object_dict: dict = None,
             map_pcl: np.ndarray = None,
-            freespace_pcl: np.ndarray = None
+            freespace_pcl: np.ndarray = None,
+            scene_hierarchy: str = "" # 层级描述参数
         ) -> str:
-        """Generate navigation query response"""
-        if self.run_mode == NavQueryRunMode.DEFAULT:
-            prompt = get_caption_prompt(environment_name, grid_map_shape, robot_coords, objects)
-        else:
+        """生成导航查询响应 - SG-Nav 分层优化版"""
+        
+        # 1. 准备工具描述 (供后续 Prompt 使用)
+        tool_descriptions = ""
+        if self.run_mode != NavQueryRunMode.DEFAULT:
             from langchain_core.tools.render import render_text_description_and_args
             tool_descriptions = render_text_description_and_args(self.toolbox.tools)
-            if self.run_mode == NavQueryRunMode.USE_TOOL_NOT_GRAPH:
+
+        # 2. 选取系统提示词 (System Prompt)
+        # 如果存在层级结构，则优先使用 SG-Nav 的 H-CoT 提示词
+        if scene_hierarchy:
+            from prompts.planning_with_captions import get_sgnav_hcot_prompt
+            prompt = get_sgnav_hcot_prompt(
+                environment_name, 
+                grid_map_shape, 
+                robot_coords, 
+                scene_hierarchy,
+                tool_descriptions # 确保 H-CoT 提示词也包含工具说明
+            )
+        else:
+            # 原始提示词逻辑分支
+            if self.run_mode == NavQueryRunMode.DEFAULT:
                 prompt = get_caption_prompt(environment_name, grid_map_shape, robot_coords, objects)
-                prompt += f'''You have access to the following tools, you should use them as much as possible during intermediate steps to help you generate the code, do not attempt to figure out yourself if you can use a tool to help you. You should only output content when you are sure and confident about the task, use tools if you are not. You should always use the notepad first to write down your reasoning and thoughts before dealing with a task.
-                        {tool_descriptions}
-                        '''
             else:
                 if self.system_mode == SystemMode.LIVE_NAVIGATION:
                     prompt = get_tool_caption_prompt(environment_name, grid_map_shape, robot_coords, objects, tool_descriptions)
                 else:
                     prompt = get_tool_caption_benchmark_prompt(environment_name, grid_map_shape, robot_coords, objects, tool_descriptions)
 
-                
+        # 3. 处理简单模式 (非 Graph 模式)
         if self.run_mode in [NavQueryRunMode.DEFAULT, NavQueryRunMode.USE_TOOL_NOT_GRAPH]:
             try:
                 response = self.nav_chain.invoke({"prompt": prompt, "query": input_query})
@@ -216,53 +229,51 @@ class LLMQueryHandler:
             except Exception as e:
                 warnings.warn(f"Error generating navigation query: {e}")
                 return f"Error generating navigation query: {e}"
+
+        # 4. 处理 Graph 模式 (Actor-Critic / Tool-Graph)
         else:
             warning = ""
+            # 组装消息历史 (Shot Prompting)
+            nav_prompt = [SystemMessage(content=prompt)]
+            
+            nav_prompt.append(HumanMessage(content="Here are two examples:"))
             example1 = get_tool_call_example_1(self.system_mode == SystemMode.BENCHMARK)
-            nav_prompt = [
-                SystemMessage(content=prompt),
-                HumanMessage(content="Here are two examples:"),
-                *example1,
-            ]
+            nav_prompt.extend(example1)
+            
             if self.system_mode == SystemMode.LIVE_NAVIGATION:
                 example2 = get_tool_call_example_2()
                 nav_prompt.extend(example2)
-            nav_prompt.append(
-                HumanMessage(content="End Example, you should start afresh. \n Object List: \n" + str(objects) + "\n" + "User Input: \n" + input_query)
+
+            # --- 【核心修改：注入 SG-Nav 实时上下文】 ---
+            # 我们将“层级结构”、“物体详情”、“用户指令”封装在一个完整的任务描述中
+            task_context = (
+                "End Example, you should start afresh.\n"
+                f"=== Current 3D Scene Graph Structure (DSG) ===\n{scene_hierarchy}\n\n"
+                f"=== Specific Object Details ===\n{str(objects)}\n\n"
+                f"=== User Instruction ===\n{input_query}"
             )
+            nav_prompt.append(HumanMessage(content=task_context))
+
+            # 5. 初始化状态并调用工具箱
+            if map_pcl is not None: self.toolbox.pcl = map_pcl
+            if freespace_pcl is not None: self.toolbox.pcl = freespace_pcl
+            if object_dict is not None: self.toolbox.set_object_dict(object_dict)
+
             if self.run_mode == NavQueryRunMode.USE_TOOL_USE_GRAPH:
-
-                if map_pcl is not None:
-                    self.toolbox.pcl = map_pcl
-                if freespace_pcl is not None:
-                    self.toolbox.pcl = freespace_pcl
-                if object_dict is not None:
-                    self.toolbox.set_object_dict(object_dict)
-
                 state = MessagesState(messages=nav_prompt)
             elif self.run_mode == NavQueryRunMode.USE_TOOL_ACTOR_CRITIC_GRAPH:
-                if map_pcl is not None:
-                    self.toolbox.pcl = map_pcl
-                if freespace_pcl is not None:
-                    self.toolbox.pcl = freespace_pcl
-                if object_dict is not None:
-                    self.toolbox.set_object_dict(object_dict)
                 state = ActorCriticState(messages=nav_prompt, objects=objects, critic_approval=False)
             
+            # 6. 执行推理循环 (LangGraph)
             try:
                 state = self.nav_chain.invoke(state, config={"recursion_limit": 50})
             except Exception as e:
                 warnings.warn(f"Error generating navigation query: {e}")
                 traceback.print_exc()
-                warning = f"Error generating navigation query: {e}"
-                warning += traceback.format_exc()
-                print("============ERROR STATE==============")
-                print(state)
-                print("=====================================")
-            # Parse messages
-            print("============STATE==============")
-            print(state)
-            print("=====================================")
+                return f"Error: {e}"
+
+            # 7. 解析结果与 Traces (保持原有解析逻辑)
+            # ... (这部分代码与你提供的源码一致，用于提取 steps, cmds, thoughts) ...
             steps = []
             for message in state["messages"]:
                 if isinstance(message, AIMessage) and len(message.tool_calls) > 0:
@@ -276,7 +287,7 @@ class LLMQueryHandler:
                     steps.append(f"Human: {message.content}")
 
             traces = "\n".join(steps)
-            cmds = self.toolbox.cmd # [('go_near', (1,)), ('go_between', (2, 3))]
+            cmds = self.toolbox.cmd 
             thoughts = self.toolbox.notes
             self.toolbox.clear()
             code_lines = []
@@ -284,13 +295,9 @@ class LLMQueryHandler:
                 args_str = ','.join(str(arg) for arg in args)
                 code_lines.append(f"    {cmd}({args_str})")
             response = "Code:\ndef go():\n" + "\n".join(code_lines)
-            print("-----------------")
-            print(warning + "Traces:\n" + traces + "\n" + "Reasoning: \n" + "\n".join(thoughts) + "\n" + response)
-            print("-----------------")
             
             return warning + "Traces:\n" + traces + "\n" + "Reasoning: \n" + "\n".join(thoughts) + "\n" + response
-
-
+    
     def extract_objects(self, input_query: str) -> List[str]:
         """Extract objects from natural language query"""
 

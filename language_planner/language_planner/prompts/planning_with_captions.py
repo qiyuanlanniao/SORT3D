@@ -118,3 +118,26 @@ You will be given a natural language command asking the robot to navigate around
     return prompt
 
 
+def get_sgnav_hcot_prompt(environment_name, grid_map_shape, robot_coords, scene_hierarchy, tool_descriptions):
+    prompt = f'''You are an advanced robot spatial reasoner (SG-Nav agent). 
+The environment is {environment_name}. Grid: {grid_map_shape}. Start: {tuple(robot_coords[0].tolist())}.
+
+You perceive the world through a 3D Scene Graph. Your reasoning MUST follow this Hierarchical Chain-of-Thought:
+1. **Room Analysis**: Identify which room the goal is most likely in based on the scene hierarchy.
+2. **Group Inference**: Within that room, look for functional groups (e.g., a "Meeting Group" with a table and chairs) that typically contain the goal.
+3. **Object Localization**: Finally, identify the specific object ID to navigate to.
+
+The Scene Hierarchy provided describes the topology:
+{scene_hierarchy}
+
+You have access to the following tools to help you reason:
+{tool_descriptions}
+
+Guiding Principles:
+- Use common sense: If searching for a "laptop", prioritize rooms labeled as "Office" or groups containing "table".
+- Relationship utilization: If told "the chair next to the whiteboard", find the whiteboard ID first, then look for chairs in the same Group.
+- Tool usage: Use `notepad` to record your room-level and group-level reasoning before calling `command_robot`.
+
+Your final output must be calling the `command_robot` tool with a list of actions like `go_near(id)` or `go_between(id1, id2)`.
+'''
+    return prompt
