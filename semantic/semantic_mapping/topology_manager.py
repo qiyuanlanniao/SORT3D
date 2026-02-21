@@ -9,6 +9,8 @@ from sensor_msgs.msg import PointCloud2
 import networkx as nx
 from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import String, ColorRGBA
+from std_srvs.srv import Trigger
+
 FUNCTIONAL_RELATIONSHIPS = [
     ("table", "chair"),      # 餐桌/办公组
     ("table", "screen"),     # 电脑位
@@ -53,6 +55,8 @@ class TopologyManager(Node):
         self.loop_closure_min_id_diff = 15  # 只有当 ID 差值较大时才认为是回环，防止和邻居误触发
 
         self.hierarchy_pub = self.create_publisher(String, '/scene_hierarchy_description', 10)
+        # 创建一个客户端，连接到 /verify_spatial_relationship 服务
+        self.vlm_client = self.create_client(Trigger, '/verify_spatial_relationship')
 
     def cloud_callback(self, msg):
         self.latest_cloud_msg = msg
@@ -536,13 +540,17 @@ class TopologyManager(Node):
         connectivity_description = self.generate_room_connectivity_description()
         self.get_logger().info(f"--- Room Connectivity Description ---\n{connectivity_description}\n--------------------------------")
         self.publish_graph_to_rviz()
+        full_scene_report = (
+            f"{hierarchy_description}\n\n"
+            f"{connectivity_description}"
+        )
         msg = String()
-        msg.data = hierarchy_description
+        msg.data = full_scene_report
         self.hierarchy_pub.publish(msg)
         save_path = "/home/iot/hm/ros2_ws/maps/latest_scene_graph.txt"
         with open(save_path, "w") as f:
-            f.write(hierarchy_description)
-        self.get_logger().info(f"💾 层级结构已保存至 {save_path}")
+            f.write(full_scene_report)
+        self.get_logger().info(f"✅ [[DSG Export] 层级与连通性已打包发送并保存")
 
     def clear_hierarchical_edges(self):
         edges_to_remove = []
@@ -826,51 +834,87 @@ class TopologyManager(Node):
     
     def prune_scene_graph_edges(self):
         """
-        场景图剪枝 (Step 2.5): 过滤掉不合理的连接
+        场景图剪枝：合并几何与视觉校验逻辑
         """
-        edges_to_remove = []
-        # 获取最新的障碍物树
         if self.latest_cloud_msg is None: return
+        
+        # 1. 准备障碍物数据 (一次性构建)
         points = pc2.read_points_numpy(self.latest_cloud_msg, field_names=("x", "y", "z"))
-        if len(points) == 0: return
+        if points.size == 0: return
         obstacle_tree = KDTree(points)
 
-        # 遍历图中所有的 [Object <-> Object] 边
+        edges_to_remove = []
+        # 仅获取 intra_group 类型的边
         obj_edges = [(u, v) for u, v, d in self.graph.edges(data=True) if d.get('edge_type') == 'intra_group']
-        
+
         for u, v in obj_edges:
-            pos_u = self.graph.nodes[u]['pos']
-            pos_v = self.graph.nodes[v]['pos']
+            node_u, node_v = self.graph.nodes[u], self.graph.nodes[v]
+            pos_u, pos_v = node_u['pos'], node_v['pos']
             
-            # --- 1. 几何长程剪枝规则 ---
-            # 规则 A: 必须在同一个房间 (利用已有的 node_to_room 逻辑)
+            # --- 策略 A: 房间 ID 校验 (最快) ---
             room_u = next((n for n in self.graph.neighbors(u) if self.graph.nodes[n].get('type')=='room'), None)
             room_v = next((n for n in self.graph.neighbors(v) if self.graph.nodes[n].get('type')=='room'), None)
-            
             if room_u != room_v:
                 edges_to_remove.append((u, v))
                 continue
 
-            # 规则 B: 连线上不能有墙 (视线遮挡检查)
+            # --- 策略 B: 几何障碍校验 (次快) ---
             if self.is_path_obstructed(pos_u, pos_v, obstacle_tree):
                 edges_to_remove.append((u, v))
                 continue
 
-            # --- 2. VLM 短程剪枝逻辑 (模拟) ---
-            # 如果两个物体极近 (< 0.5m)，且类别逻辑不通（如柜子和墙画重合），则剪枝
+            # --- 视觉逻辑校验日志 ---
             dist = np.linalg.norm(pos_u - pos_v)
-            if dist < 0.5:
-                label_u = self.graph.nodes[u].get('label', '')
-                label_v = self.graph.nodes[v].get('label', '')
-                # 这里可以扩展：如果你的 A6000 跑了 LLaVA，可以调用并询问是否真实共存
-                # 目前采用逻辑过滤：如果两个静态大件重合，通常是感知错误
-                if 'cabinet' in label_u and 'cabinet' in label_v:
-                    # 连排柜子是允许的，不剪枝
-                    pass
+            label_u, label_v = node_u.get('label', 'obj'), node_v.get('label', 'obj')
+            
+            if dist < 1.0 and label_u != label_v:
+                # 打印：正在发起验证
+                self.get_logger().info(f"🔍 [VLM Check] 正在验证短程边: {label_u} <-> {label_v} (距离: {dist:.2f}m)")
+                
+                is_valid = self.call_vlm_verification_service(label_u, label_v)
+                
+                if not is_valid:
+                    edges_to_remove.append((u, v))
+                    # 打印：剪枝成功
+                    self.get_logger().warn(f"✂️ [VLM Pruned] 视觉逻辑不通过，已标记删除: {label_u} <-> {label_v}")
+                else:
+                    # 打印：保留边
+                    self.get_logger().info(f"✅ [VLM Kept] 视觉逻辑通过，保留连接: {label_u} <-> {label_v}")
 
-        self.graph.remove_edges_from(edges_to_remove)
         if edges_to_remove:
-            self.get_logger().info(f"✂️ [Pruning] 已剪除 {len(edges_to_remove)} 条不合理连线")
+            self.graph.remove_edges_from(edges_to_remove)
+            self.get_logger().info(f"✨ [Pruning Summary] 本轮共通过 VLM 剪除 {len(edges_to_remove)} 条边")
+
+    def call_vlm_verification_service(self, name_a, name_b):
+        """
+        同步调用 VLM 验证服务：询问 VLM 这两个物体是否真的有关联
+        """
+        # 1. 检查服务是否可用
+        if not self.vlm_client.wait_for_service(timeout_sec=1.0):
+            # 如果服务没启动（比如你没开感知节点），默认保留边，不进行剪枝
+            return True 
+
+        # 2. 构造请求
+        # 我们借用 Trigger.srv 的 message 字段传递参数，格式约定为 "物体A,物体B"
+        req = Trigger.Request()
+        req.message = f"{name_a},{name_b}"
+
+        # 3. 发送异步请求
+        future = self.vlm_client.call_async(req)
+        
+        # 4. 等待结果 (因为是在分析定时器中运行，这里简单的阻塞等待是可行的)
+        # 在 A6000 上，Qwen2.5-VL 的响应通常在 0.5s - 2s 之间
+        import time
+        start_time = time.time()
+        while not future.done():
+            if time.time() - start_time > 10.0: # 10秒超时保护
+                self.get_logger().warn("VLM 验证超时，默认保留连接")
+                return True
+            time.sleep(0.1) # 轮询间隔
+
+        # 5. 获取并返回结果
+        # 如果 response.success 为 True，表示 VLM 认为它们有关联，不剪枝
+        return future.result().success
 
 def main(args=None):
     rclpy.init(args=args)

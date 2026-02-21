@@ -1,0 +1,12 @@
+pyproject.toml
+setup.cfg
+bytetrack/__init__.py
+bytetrack/basetrack.py
+bytetrack/byte_tracker.py
+bytetrack/kalman_filter.py
+bytetrack/matching.py
+bytetrack.egg-info/PKG-INFO
+bytetrack.egg-info/SOURCES.txt
+bytetrack.egg-info/dependency_links.txt
+bytetrack.egg-info/requires.txt
+bytetrack.egg-info/top_level.txt

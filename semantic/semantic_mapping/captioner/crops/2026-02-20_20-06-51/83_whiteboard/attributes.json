@@ -1,0 +1,35 @@
+{
+    "image": {
+        "crop_coords": [
+            [
+                57,
+                18
+            ],
+            [
+                170,
+                53
+            ]
+        ],
+        "is_caption_generated": true
+    },
+    "centroid": [
+        20.95612907409668,
+        -0.9800408482551572,
+        0.09568505734205243
+    ],
+    "dimensions": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "heading": 0.0,
+    "largest_face": 0.0,
+    "name": {
+        "string": "whiteboard",
+        "similarity_to_image": [
+            3.171875,
+            3.375,
+            2.96875
+        ]
+    }
+}

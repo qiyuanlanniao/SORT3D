@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: bytetrack
+Version: 0.0.1
+Summary: BYTE Tracker.
+Requires-Dist: opencv_python
+Requires-Dist: numpy
+Requires-Dist: lapx

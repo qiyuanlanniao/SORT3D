@@ -1,0 +1,35 @@
+{
+    "image": {
+        "crop_coords": [
+            [
+                18,
+                26
+            ],
+            [
+                53,
+                76
+            ]
+        ],
+        "is_caption_generated": true
+    },
+    "centroid": [
+        -0.6168638467788696,
+        3.179683923721314,
+        -0.007744679227471352
+    ],
+    "dimensions": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "heading": 0.0,
+    "largest_face": 0.0,
+    "name": {
+        "string": "screen",
+        "similarity_to_image": [
+            3.515625,
+            3.421875,
+            3.171875
+        ]
+    }
+}

@@ -1,0 +1,65 @@
+platform: mecanum_sim
+use_lidar_odom: false
+detection_linear_state_time_bias: 0.0
+detection_angular_state_time_bias: 0.0
+image_processing_interval: 0.5
+visualize: true
+vis_interval: 0.5
+annotate_image: true
+
+prompts:
+prompts:
+  chair:
+    prompts:
+      - chair
+    is_instance: true
+  table:
+    prompts:
+      - table
+    is_instance: true
+  sofa:
+    prompts:
+      - sofa
+      - long sofa
+    is_instance: true
+  screen:
+    prompts:
+      - screen
+      - screen on the table
+      - screen with a stand
+      - black rectangular screen
+    is_instance: true
+  wall:
+    prompts:
+      - wall
+      - white wall
+      - blue wall
+    is_instance: false
+  painting:
+    prompts:
+      - painting on the wall
+    is_instance: true
+  whiteboard:
+    prompts:
+      - whiteboard on the wall
+      - standing whiteboard
+    is_instance: true
+  cabinet:
+    prompts:
+      - storage cabinet
+      - wood cabinet
+      - white cabinet
+      - black cabinet under the table
+    is_instance: true
+  floor:
+    prompts:
+      - floor
+    is_instance: false
+  ceiling:
+    prompts:
+      - ceiling
+    is_instance: false
+  door:
+    prompts:
+      - door
+    is_instance: true

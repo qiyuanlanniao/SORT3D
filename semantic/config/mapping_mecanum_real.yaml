@@ -1,0 +1,71 @@
+platform: custom_seeker  
+use_lidar_odom: false
+image360_fov_up: 61.1
+yaw_offset_deg: 132.0
+z_offset: 0.12 
+visualize: false
+vis_interval: 0.5
+annotate_image: true
+
+topics:
+  image: "/concat_undistort_node/image"
+  cloud: "/cloud_registered"
+  odom: "/Odometry"
+
+prompts:
+  chair:
+    prompts:
+      - chair
+      - sofa
+    is_instance: true
+  # sofa:
+  #   prompts:
+  #     - sofa
+  #   is_instance: true
+  table:
+    prompts:
+      - table
+    is_instance: true
+  screen:
+    prompts:
+      - screen
+      - screen on the table
+      - screen with a stand
+      - black rectangular screen
+    is_instance: true
+  wall:
+    prompts:
+      - wall
+      - white wall
+      - blue wall
+      - black wall
+    is_instance: false
+  painting:
+    prompts:
+      - painting on the wall
+    is_instance: true
+  whiteboard:
+    prompts:
+      - whiteboard on the wall
+      - standing whiteboard
+    is_instance: true
+  cabinet:
+    prompts:
+      - cabinet
+      - storage cabinet
+      - wood cabinet
+      - white cabinet
+      - black cabinet under the table
+    is_instance: true
+  # floor:
+  #   prompts:
+  #     - floor
+  #   is_instance: false
+  # ceiling:
+  #   prompts:
+  #     - ceiling
+  #   is_instance: false
+  door:
+    prompts:
+      - door
+    is_instance: true

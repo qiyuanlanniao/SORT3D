@@ -1,0 +1,35 @@
+{
+    "image": {
+        "crop_coords": [
+            [
+                31,
+                31
+            ],
+            [
+                92,
+                92
+            ]
+        ],
+        "is_caption_generated": true
+    },
+    "centroid": [
+        1.1265496015548708,
+        5.510012626647947,
+        -0.5836617946624759
+    ],
+    "dimensions": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "heading": 0.0,
+    "largest_face": 0.0,
+    "name": {
+        "string": "chair",
+        "similarity_to_image": [
+            3.125,
+            3.484375,
+            4.0
+        ]
+    }
+}
