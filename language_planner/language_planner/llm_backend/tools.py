@@ -251,8 +251,8 @@ class AgentToolbox:
                 max_xy3 = bbox3_rot[..., 0].max(axis=-1)
                 min_xy3 = bbox3_rot[..., 0].min(axis=-1)
 
-                iom1_1d_xy = (max_xy1 - min_xy3) / np.minimum(max_xy1 - min_xy1, max_xy3 - min_xy3)
-                iom2_1d_xy = (max_xy2 - min_xy1) / np.minimum(max_xy1 - min_xy1, max_xy2 - min_xy2)
+                iom1_1d_xy = (max_xy1 - min_xy3) / (np.minimum(max_xy1 - min_xy1, max_xy3 - min_xy3)+ 1e-6)
+                iom2_1d_xy = (max_xy2 - min_xy1) / (np.minimum(max_xy1 - min_xy1, max_xy2 - min_xy2)+ 1e-6)
 
                 dist_sums_xy = -iom1_1d_xy - iom2_1d_xy
 

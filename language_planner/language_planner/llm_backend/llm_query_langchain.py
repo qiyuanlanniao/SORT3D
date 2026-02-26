@@ -190,7 +190,10 @@ class LLMQueryHandler:
             object_dict: dict = None,
             map_pcl: np.ndarray = None,
             freespace_pcl: np.ndarray = None,
-            scene_hierarchy: str = "" # 层级描述参数
+            scene_hierarchy: str = "",
+            compass_description: str = "",     # 对应 TIER 1 (Focal)
+            peripheral_description: str = "",  # 对应 TIER 2 (Peripheral) <-- 新增
+            global_memory_description: str = "" # 对应 TIER 3 (Memory)     <-- 新增
         ) -> str:
         """生成导航查询响应 - SG-Nav 分层优化版"""
         
@@ -248,8 +251,18 @@ class LLMQueryHandler:
             # 我们将“层级结构”、“物体详情”、“用户指令”封装在一个完整的任务描述中
             task_context = (
                 "End Example, you should start afresh.\n"
-                f"=== Current 3D Scene Graph Structure (DSG) ===\n{scene_hierarchy}\n\n"
-                f"=== Specific Object Details ===\n{str(objects)}\n\n"
+                "## SYSTEM OBSERVATION (Multi-Resolution)\n\n"
+                
+                "### TIER 1: IMMEDIATE FOCAL SIGHT (Objects in front, <3m)\n"
+                f"These objects are directly visible with detailed visual descriptions:\n{compass_description}\n"
+                f"Detailed Metadata: {str(objects)}\n\n" # 这里的 objects 仅包含 focal 节点
+                
+                "### TIER 2: PERIPHERAL AWARENESS (Objects in current room but not in focus)\n"
+                f"These objects are nearby but descriptions are omitted for efficiency:\n{peripheral_description}\n\n"
+                
+                "### TIER 3: GLOBAL TOPOLOGICAL MEMORY (Distant rooms)\n"
+                f"High-level summary of other areas:\n{global_memory_description}\n\n"
+                
                 f"=== User Instruction ===\n{input_query}"
             )
             nav_prompt.append(HumanMessage(content=task_context))

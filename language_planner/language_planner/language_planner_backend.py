@@ -61,7 +61,10 @@ class LanguagePlannerBackend:
             freespace_pcl: np.ndarray,
             object_dict: dict,
             cur_pos: np.ndarray,
-            scene_hierarchy: str = ""):
+            scene_hierarchy: str = "",
+            compass_description: str = "",
+            peripheral_description: str = "", # 新增
+            global_memory_description: str = ""):
 
         if not object_dict:
             return [], [], [], ""
@@ -116,7 +119,10 @@ class LanguagePlannerBackend:
             object_dict,
             map_pcl,
             freespace_pcl,
-            scene_hierarchy=scene_hierarchy
+            scene_hierarchy=scene_hierarchy,
+            compass_description=compass_description,
+            peripheral_description=peripheral_description, # 透传
+            global_memory_description=global_memory_description # 透传
         )
         
         self.log_info("output code")

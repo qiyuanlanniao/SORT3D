@@ -119,25 +119,47 @@ You will be given a natural language command asking the robot to navigate around
 
 
 def get_sgnav_hcot_prompt(environment_name, grid_map_shape, robot_coords, scene_hierarchy, tool_descriptions):
-    prompt = f'''You are an advanced robot spatial reasoner (SG-Nav agent). 
-The environment is {environment_name}. Grid: {grid_map_shape}. Start: {tuple(robot_coords[0].tolist())}.
+    prompt = f'''You are an advanced robot spatial reasoner (SG-Nav + SpatialNav agent). 
+The environment is {environment_name}. Start: {tuple(robot_coords[0].tolist())}.
 
-You perceive the world through a 3D Scene Graph. Your reasoning MUST follow this Hierarchical Chain-of-Thought:
-1. **Room Analysis**: Identify which room the goal is most likely in based on the scene hierarchy.
-2. **Group Inference**: Within that room, look for functional groups (e.g., a "Meeting Group" with a table and chairs) that typically contain the goal.
-3. **Object Localization**: Finally, identify the specific object ID to navigate to.
+You perceive the world through two primary systems:
+1. **Scene Graph (Memory)**: Topological knowledge of rooms and groups.
+2. **3D Octant Compass (Sight)**: Immediate 3D relative positions of objects.
 
-The Scene Hierarchy provided describes the topology:
+### 3D Octant Compass Definition (Like a 2x2 Rubik's Cube):
+The space around you is divided into 8 sectors based on your local coordinate system:
+- **FRONT_LEFT_TOP**: Objects in front, to your left, and above your camera height.
+- **FRONT_RIGHT_BOTTOM**: Objects in front, to your right, and below your camera height (likely on floor).
+- ... and so on for ALL 8 combinations of [FRONT/BACK], [LEFT/RIGHT], [TOP/BOTTOM].
+
+### Hierarchical Reasoning (H-CoT):
+1. **Global Search**: Find the target Room/Group in the Scene Graph memory.
+2. **Local Orientation**: Look at the 3D Octant Compass to see if the target is in your immediate sight.
+3. **Height/Depth Inference**: Use TOP/BOTTOM tags to infer placement. (e.g., if a "mug" is TOP and "table" is TOP in the same sector, the mug is likely on the table).
+4. **Action**: Generate code.
+
+Scene Hierarchy:
 {scene_hierarchy}
 
-You have access to the following tools to help you reason:
+Available Tools:
 {tool_descriptions}
 
-Guiding Principles:
-- Use common sense: If searching for a "laptop", prioritize rooms labeled as "Office" or groups containing "table".
-- Relationship utilization: If told "the chair next to the whiteboard", find the whiteboard ID first, then look for chairs in the same Group.
-- Tool usage: Use `notepad` to record your room-level and group-level reasoning before calling `command_robot`.
-
-Your final output must be calling the `command_robot` tool with a list of actions like `go_near(id)` or `go_between(id1, id2)`.
+Final output: call `command_robot` with `go_near(id)` or `go_between(id1, id2)`. Use `notepad` for 3D reasoning.
 '''
+    return prompt
+
+
+def get_vlm_relationship_verification_prompt(obj_a_name, obj_b_name):
+    """
+    用于 VLM 短程边剪枝的提示词。
+    要求 VLM 观察图像并判断两个检测到的物体是否真的存在空间关联。
+    """
+    prompt = (
+        f"You are a spatial relationship validator. Look at the image provided. "
+        f"There are two objects detected: a '{obj_a_name}' and a '{obj_b_name}'. "
+        f"Based on the visual evidence, do they appear to be part of the same functional group "
+        f"or are they physically next to each other in a way that makes sense? "
+        f"(e.g., a chair next to a table, a monitor on a desk, or a cabinet next to another cabinet). "
+        f"Answer ONLY 'Yes' if they are related, or 'No' if they are unrelated or separated by a wall/large gap."
+    )
     return prompt

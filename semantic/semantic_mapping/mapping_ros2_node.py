@@ -277,6 +277,8 @@ class MappingNode(Node):
         self.obj_text_pub = self.create_publisher(MarkerArray, '/obj_labels', 10)
         self.annotated_image_pub = self.create_publisher(Image, '/annotated_image', 10)
         self.freespace_pub = self.create_publisher(PointCloud2, '/traversable_area', 5)
+        self.global_scene_cloud = None  # 用于存储整个场景的累积点云
+        self.global_map_pub = self.create_publisher(PointCloud2, '/global_map_cloud', 10)
 
         self.log_info('Semantic mapping node has been started.')
 
@@ -639,15 +641,41 @@ class MappingNode(Node):
                     # 原有的物体显示逻辑
                     self.obj_mapper.rerun_vis(camera_odom, regularized=True, show_bbox=True, debug=True)
 
-            # if self.do_visualize_with_rerun:
-            #     if detection_stamp - self.last_vis_stamp > self.vis_interval:
-            #         self.last_vis_stamp = detection_stamp
-            #         self.obj_mapper.rerun_vis(camera_odom, regularized=True, show_bbox=True, debug=True)
-            #         self.obj_mapper.rerun_visualizer.visualize_global_pcd(self.global_cloud) 
-                    # self.obj_mapper.rerun_visualizer.visualize_local_pcd_with_mesh(np.concatenate(self.cloud_stack, axis=0))
+        if neighboring_cloud is not None:
+            # 1. 提取当前帧点云（确保它是 map 坐标系下的）
+            # 假设 neighboring_cloud 是 (N, 3) 或 (N, 4) 的 numpy 数组
+            current_points = neighboring_cloud[:, :3]
             
-            # print(f"Mapping processing time: {time.time() - start_time}, inference time: {inference_time}, map update time: {map_update_time}, sam2 time: {sam2_time}")
+            if self.global_scene_cloud is None:
+                self.global_scene_cloud = current_points
+            else:
+                # 拼接新老点云
+                self.global_scene_cloud = np.vstack([self.global_scene_cloud, current_points])
+            
+            # 2. 体素下采样（极其重要！防止内存爆炸）
+            # 我们每隔一段时间或每帧执行一次
+            if len(self.global_scene_cloud) > 50000: # 比如超过 5 万点就开始瘦身
+                import open3d as o3d
+                pcd = o3d.geometry.PointCloud()
+                pcd.points = o3d.utility.Vector3dVector(self.global_scene_cloud)
+                # 0.05 代表 5 厘米一个方格，只保留方格内一个点
+                pcd = pcd.voxel_down_sample(voxel_size=0.05) 
+                self.global_scene_cloud = np.asarray(pcd.points)
 
+            # 3. 发布全局地图话题
+            self.publish_global_map()
+
+    def publish_global_map(self):
+        if self.global_scene_cloud is not None:
+            now = self.get_clock().now().to_msg()
+            # 利用你现有的工具函数创建消息
+            msg = ros2_bag_utils.create_point_cloud(
+                self.global_scene_cloud, 
+                now.sec, now.nanosec, 
+                frame_id='map'
+            )
+            self.global_map_pub.publish(msg)
+            
     def mapping_callback(self):
         if self.new_detection:
             start = time.time()

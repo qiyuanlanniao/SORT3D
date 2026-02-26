@@ -27,6 +27,8 @@ from language_planner.language_planner_backend import LanguagePlannerBackend
 from captioner.tools import ros2_bag_utils
 from captioner.captioning_backend import CropUpdateSource
 
+from scipy.spatial.transform import Rotation as R
+
 
 class PlatformType(Enum):
     WHEELCHAIR = 'wheelchair'
@@ -68,7 +70,7 @@ class LanguagePlanner(Node):
         self.object_marker_pub = self.create_publisher(Marker, '/selected_object_marker', 5)
 
         self.callback_group = ReentrantCallbackGroup()
-        self.pose_sub = self.create_subscription(Odometry, '/mavros/vision_pose/pose', self.handle_pose, 1, callback_group=self.callback_group)
+        self.pose_sub = self.create_subscription(PoseStamped, '/mavros/vision_pose/pose', self.handle_pose, 1, callback_group=self.callback_group)
         self.map_sub = self.create_subscription(PointCloud2, '/cloud_registered', self.handle_map, 1, callback_group=self.callback_group)
         self.freespace_sub = self.create_subscription(PointCloud2, '/traversable_area', self.handle_freespace, 1, callback_group=self.callback_group)
 
@@ -87,10 +89,13 @@ class LanguagePlanner(Node):
 
         self.cur_pos = np.array([0., 0., 0.])
         self.cur_vel = np.array([0., 0., 0.])
+        self.cur_orient = np.array([0., 0., 0., 1.])
         self.map_pcl: np.ndarray = None
         self.freespace_pcl: np.ndarray = None
         self.target_waypoints = []
         self.target_ids = []
+        self.focal_dist_threshold = 3.0      # 焦点区距离阈值（例如 4 米内的物体才看 Caption）
+        self.camera_height_offset = 0.1     # 垂直分界线：相对于相机高度上下 0.5m 判定为 TOP/BOTTOM
 
 
         # Other
@@ -112,6 +117,77 @@ class LanguagePlanner(Node):
         self.cur_pos[0] = msg.pose.position.x
         self.cur_pos[1] = msg.pose.position.y
         self.cur_pos[2] = msg.pose.position.z
+
+        # --- 新增：记录朝向 ---
+        self.cur_orient[0] = msg.pose.orientation.x
+        self.cur_orient[1] = msg.pose.orientation.y
+        self.cur_orient[2] = msg.pose.orientation.z
+        self.cur_orient[3] = msg.pose.orientation.w
+
+    def get_relative_spatial_info(self, target_pos):
+        """
+        第一阶段核心：3D 坐标变换。
+        将全局坐标转换到以机器人为中心的局部坐标系 [前/后, 左/右, 上/下]
+        """
+        # 1. 计算全局 3D 相对位移
+        rel_pos_global = np.array(target_pos) - self.cur_pos
+        
+        # 2. 获取机器人当前朝向的四元数逆旋转
+        from scipy.spatial.transform import Rotation as R
+        rot_robot = R.from_quat(self.cur_orient)
+        
+        # 3. 将位移旋转到机器人局部系：x'在前，y'在左，z'在上
+        rel_pos_local = rot_robot.inv().apply(rel_pos_global)
+        
+        # 4. 计算 3D 欧氏距离
+        distance = np.linalg.norm(rel_pos_local)
+        
+        return distance, rel_pos_local
+    
+    def get_3d_octant_description(self, object_dict):
+        """
+        第二阶段：基于局部坐标正负号，将空间划分为 8 个立体象限（类似二阶魔方）
+        坐标系参考：x' 前/后, y' 左/右, z' 上/下
+        """
+        # 定义 8 个立体象限
+        octants = {
+            "FRONT_LEFT_TOP": [], "FRONT_RIGHT_TOP": [],
+            "FRONT_LEFT_BOTTOM": [], "FRONT_RIGHT_BOTTOM": [],
+            "BACK_LEFT_TOP": [], "BACK_RIGHT_TOP": [],
+            "BACK_LEFT_BOTTOM": [], "BACK_RIGHT_BOTTOM": []
+        }
+
+        for obj_id, info in object_dict.items():
+            if obj_id == -1: continue
+            
+            lp = info['local_pos'] # [x', y', z']
+            dist = info['relative_dist']
+            label = info.get('name', 'item')
+
+            # 根据 x, y, z 的正负号决定象限
+            dim_x = "FRONT" if lp[0] >= 0 else "BACK"
+            dim_y = "LEFT" if lp[1] >= 0 else "RIGHT"
+            dim_z = "TOP" if lp[2] >= self.camera_height_offset else "BOTTOM"
+            
+            key = f"{dim_x}_{dim_y}_{dim_z}"
+            octants[key].append(f"{label}(ID:{obj_id}, {dist:.1f}m)")
+
+        # 组装描述文本
+        desc_lines = ["=== 3D Octant Observation (Agent-Centric) ==="]
+        for key, items in octants.items():
+            content = ", ".join(items) if items else "(Empty)"
+            desc_lines.append(f"- {key}: {content}")
+            
+        return "\n".join(desc_lines)
+    
+    def is_in_sight_octants(self, local_pos):
+        """
+        判断物体是否在机器人前方的 4 个立体象限内（即“视野”内）
+        逻辑：x' > 0 (前方)
+        """
+        # local_pos 格式为 [x', y', z']
+        # 只要物体在机器人前方 (x' > 0)，我们就认为它是“焦点”
+        return local_pos[0] > 0
 
     
     def handle_map(self, msg: PointCloud2):
@@ -347,6 +423,7 @@ class LanguagePlanner(Node):
             
             # 这里的 self.object_dict 键是字符串 (来自 JSON)
             raw_object_dict = self.object_dict 
+            self.save_scene_objects_json(raw_object_dict) 
 
             filtered_obj_ids = self.language_planner_backend.get_retrieved_objects(obj_query_list, raw_object_dict)
             
@@ -363,23 +440,156 @@ class LanguagePlanner(Node):
                     self.log_info(f"Warning: LLM suggested ID {obj_id}, but it's not in the scene!")
             
             object_dict = new_object_dict
-
             
-        # 修改 generate_plan 的调用，传入最新的层级信息
+        obj_to_room_map = {}
+        if self.latest_hierarchy:
+            import re
+            room_sections = re.split(r'\[Room\]:', self.latest_hierarchy)
+            for section in room_sections[1:]:
+                room_id = section.strip().split('\n')[0].split(' ')[0].strip()
+                ids = re.findall(r'ID:(\d+)', section)
+                for oid in ids:
+                    obj_to_room_map[int(oid)] = room_id
+
+        # 注入属性
+        for oid, info in object_dict.items():
+            if oid != -1:
+                info['parent_room_id'] = obj_to_room_map.get(int(oid))
+
+        current_room_id = None
+        min_dist = float('inf')
+        for obj_id, info in object_dict.items():
+            if obj_id == -1: continue
+            dist, local_pos = self.get_relative_spatial_info(info['centroid'])
+            info['relative_dist'] = dist
+            info['local_pos'] = local_pos
+            
+            # 以离机器人最近的、且已知房间 ID 的物体来确定机器人位置
+            if dist < min_dist and info.get('parent_room_id'):
+                min_dist = dist
+                current_room_id = info['parent_room_id']
+        
+        self.robot_current_room = current_room_id
+
+        self.get_logger().info(f"📍 预计算完成：机器人当前位于 {current_room_id}, 已计算 {len(object_dict)} 个物体的 3D 相对位姿")
+
+        focal_objects = {}      # 高分辨率：详细 Caption + 8 邻域方位
+        peripheral_objects = {} # 中分辨率：仅 ID + 标签 + 距离
+        room_summaries = {}     # 低分辨率：仅房间概况
+
+        processed_dict_for_backend = {}
+
+        for obj_id, info in object_dict.items():
+            if obj_id == -1: continue
+            
+            dist = info['relative_dist']
+            is_near = (dist < self.focal_dist_threshold)
+            is_in_sight = self.is_in_sight_octants(info['local_pos'])
+            
+            # 拷贝一份数据，避免修改原始缓存
+            info_to_send = info.copy()
+
+            # --- 分辨率决策 ---
+            if is_near and is_in_sight:
+                # 【高分辨率】在眼前且近：保留所有，LLM 能看到详细 Caption
+                pass 
+            else:
+                # 【低分辨率】在身后或太远：抹除 Caption，仅保留坐标和 ID
+                # 这样 LLM 知道它在哪，但不会被长文本淹没，也不会浪费 Token
+                info_to_send['caption'] = "[Description omitted due to distance/view]"
+            
+            processed_dict_for_backend[obj_id] = info_to_send
+
+        # 2. 这里的 octant_desc 应该包含所有 processed_dict_for_backend 里的方位
+        # 这样 LLM 才能看到 "BACK: chair(ID:68, 22.8m)"
+        full_octant_desc = self.get_3d_octant_description(processed_dict_for_backend)
+
+        # 生成房间概况文本（零 Token 预压缩）
+        room_desc_lines = []
+        for rid, items in room_summaries.items():
+            counts = {name: items.count(name) for name in set(items)}
+            summary = ", ".join([f"{count} {name}(s)" for name, count in counts.items()])
+            room_desc_lines.append(f"Room {rid} (Far away) contains: {summary}")
+        
+        global_memory_desc = "\n".join(room_desc_lines)
+        # 1. 组装外围物体的简要清单 (Mid-Res)
+        peripheral_desc = "=== Nearby Objects (Out of Sight or Far) ===\n"
+        for oid, info in peripheral_objects.items():
+            peripheral_desc += f"- {info['name']}(ID:{oid}, {info['relative_dist']:.1f}m)\n"
+        if not peripheral_objects: peripheral_desc += "(None)\n"
+
+        local_room_objects = {oid: info for oid, info in object_dict.items() 
+                              if info.get('parent_room_id') == current_room_id}
+        
+        # 这个描述会告诉 LLM：即便在 BACK（后方），那里也有个椅子
+        octant_desc = self.get_3d_octant_description(local_room_objects)
+
+        # 打印日志方便你调试
+        self.get_logger().info(f"\n[DEBUG] 当前 3D 焦点观测：\n{octant_desc}")
+            
+        # --- 对比实验开关 ---
+        USE_HIERARCHY = True  # 改为 False 即关闭层次化
+        # ------------------
+
+        if not USE_HIERARCHY:
+            # 1. 清空层级描述，让 LLM 拿不到房间和组的信息
+            display_hierarchy = "" 
+            self.log_info("🧪 [Experiment] 正在以【非层次化/扁平模式】运行推理...")
+        else:
+            display_hierarchy = self.latest_hierarchy
+
+        # 3. 修改后端调用：传入三级分辨率数据
         self.target_waypoints, self.target_ids, filtered_objects_out, output_code = self.language_planner_backend.generate_plan(
             self.environment_name,
             input_statement,
             self.map_pcl,
             self.freespace_pcl,
-            object_dict,
+            processed_dict_for_backend,  # 只有这里的物体带有冗长的 Caption
             self.cur_pos,
-            scene_hierarchy=self.latest_hierarchy 
+            scene_hierarchy=display_hierarchy,
+            compass_description=full_octant_desc, # 这里的 octant_desc 仅包含 focal_objects 的方位
+            peripheral_description=peripheral_desc, # 新增
+            global_memory_description=global_memory_desc # 新增
         )
+
         self.log_info(output_code)
         self.log_llm_output(input_statement, output_code)
 
         self.publish_object_markers(object_dict, self.target_ids)
         self.publish_waypoints(self.target_ids, self.target_waypoints, object_dict)
+
+    def save_scene_objects_json(self, object_dict):
+        """
+        保存地图中“全量”识别物体的详情
+        """
+        maps_dir = os.path.join(os.path.expanduser("~"), "hm/ros2_ws/maps")
+        os.makedirs(maps_dir, exist_ok=True)
+        json_path = os.path.join(maps_dir, "scene_objects.json")
+
+        all_objects_data = []
+        
+        # 遍历原始字典中的每一个物体
+        for obj_id_str, info in object_dict.items():
+            # 跳过机器人节点 (-1)
+            if str(obj_id_str) == "-1":
+                continue
+                
+            all_objects_data.append({
+                "id": int(obj_id_str), # 确保 ID 是整数
+                "name": info.get("name", "unknown"),
+                "position": info.get("centroid", [0.0, 0.0, 0.0]),
+                "caption": info.get("caption", "No description available")
+            })
+
+        # 按 ID 排序，方便查看
+        all_objects_data.sort(key=lambda x: x["id"])
+
+        try:
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(all_objects_data, f, indent=4, ensure_ascii=False)
+            self.log_info(f"✅ [Full Export] 全量物体信息({len(all_objects_data)}个)已保存至: {json_path}")
+        except Exception as e:
+            self.log_info(f"❌ 导出全量 JSON 失败: {e}")
 
         
 def main():

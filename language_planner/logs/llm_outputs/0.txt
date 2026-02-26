@@ -1,7 +1,7 @@
 ===============
 INPUT STATEMENT
 ===============
-go to the table
+gto the farest screen
 ===============
 OUTPUT CODE
 ===============
@@ -30,47 +30,50 @@ AI Calling tool command_robot with args {'list_of_commands': [('go_near', (1,)),
 Tool: None, Content: The robot has executed the commands successfully, now say 'done'!
 AI: done
 Human: End Example, you should start afresh.
-=== Current 3D Scene Graph Structure (DSG) ===
-=== Hierarchical Scene Graph (H-CoT Format) ===
+## SYSTEM OBSERVATION (Multi-Resolution)
 
-[Room]: room_0
-  |- [Standalone]: table(ID:31), screen(ID:25), table(ID:23), cabinet(ID:40), screen(ID:21), cabinet(ID:32), screen(ID:18), cabinet(ID:20), table(ID:22), cabinet(ID:14)
+### TIER 1: IMMEDIATE FOCAL SIGHT (Objects in front, <3m)
+These objects are directly visible with detailed visual descriptions:
+=== 3D Octant Observation (Agent-Centric) ===
+- FRONT_LEFT_TOP: (Empty)
+- FRONT_RIGHT_TOP: screen(ID:26, 8.4m)
+- FRONT_LEFT_BOTTOM: (Empty)
+- FRONT_RIGHT_BOTTOM: screen(ID:19, 7.8m), screen(ID:22, 8.7m), screen(ID:63, 24.1m)
+- BACK_LEFT_TOP: (Empty)
+- BACK_RIGHT_TOP: (Empty)
+- BACK_LEFT_BOTTOM: (Empty)
+- BACK_RIGHT_BOTTOM: (Empty)
+Detailed Metadata: [[19, 'screen', '[Description omitted due to distance/view]', 91, 114, 0, 0.0], [22, 'screen', '[Description omitted due to distance/view]', 103, 101, -2, 0.024598182414402325], [26, 'screen', '[Description omitted due to distance/view]', 98, 113, 1, 0.0], [63, 'screen', '[Description omitted due to distance/view]', 255, 123, -3, 0.0]]
 
-[Room]: room_1
-  |- [Standalone]: cabinet(ID:62), screen(ID:65), screen(ID:43), screen(ID:56), cabinet(ID:50), table(ID:45), screen(ID:55), screen(ID:36), cabinet(ID:47), chair(ID:64)
+### TIER 2: PERIPHERAL AWARENESS (Objects in current room but not in focus)
+These objects are nearby but descriptions are omitted for efficiency:
+=== Nearby Objects (Out of Sight or Far) ===
+(None)
 
-=== Specific Object Details ===
-[[22, 'table', 'The table is brown, made of wood, rectangular. It has a smooth surface with visible grain patterns. The table appears to be sturdy and solid, suitable for supporting heavy objects. It has four legs, which provide stability. The table is likely used for dining or as a workspace.', 98, 113, -1, 0.05169946007376921], [23, 'table', 'The table is black, made of metal, rectangular. It has a flat surface with a smooth texture. The table provides a stable platform for placing items and supports various activities such as dining, writing, or working.', 114, 112, 0, 0.004774250407785006], [31, 'table', 'The table is brown, made of wood, rectangular. It has a flat surface with visible grain patterns. The table provides a stable platform for placing items such as papers, books, or electronic devices. It also offers a workspace for activities like writing, drawing, or working on a computer.', 123, 112, 0, 0.0], [45, 'table', "The table is white, made of wood, rectangular. It has a flat surface with a smooth finish. The table provides a stable platform for placing items such as books, papers, or drinks. It also offers a surface for writing or drawing. The table's dimensions suggest it could be used for dining, working, or studying purposes.", 183, 104, -2, 0.0], [-1, 'egorobot', 'The ego robot being navigated around the room. It has an ID of -1. When a language query requires a computation related to the robot\'s current position, use this. Example: "go to the door closest to you". In this case, you would call the tool find_near(target_name="door", anchor_id=-1).', 15, 98, 0, 0.35]]
+
+### TIER 3: GLOBAL TOPOLOGICAL MEMORY (Distant rooms)
+High-level summary of other areas:
+
 
 === User Instruction ===
-go to the table
-AI Calling tool notepad with args {'thoughts': 'The user instruction is to "go to the table." There are four tables in the scene:\n\n- Table(ID:22) in room_0\n- Table(ID:23) in room_0\n- Table(ID:31) in room_0\n- Table(ID:45) in room_1\n\nThe robot\'s current position is at (15, 98, 0), which is closer to room_0 based on the grid dimensions (71, 174). Since no specific table is mentioned, I should navigate to the table closest to the robot\'s current position.\n\nTo determine the closest table, I can use the `find_near` tool with the robot\'s ID (-1) as the anchor.'}
-Tool: notepad, Content: Noted and please proceed with the next step!
-AI Calling tool find_near with args {'target_name': 'table', 'anchor_id': -1}
-Tool: find_near, Content: tables, ordered from closest to furthest from the object with ID -1, have IDs of [0, 1, 2, 3]
-AI Calling tool notepad with args {'thoughts': 'The tables are ordered from closest to furthest as follows:\n- Table(ID:22) (index 0)\n- Table(ID:23) (index 1)\n- Table(ID:31) (index 2)\n- Table(ID:45) (index 3)\n\nSince the user did not specify which table, I will navigate to the closest one, which is Table(ID:22).'}
-AI Calling tool command_robot with args {'list_of_commands': [['go_near', [22]]]}
+gto the farest screen
+AI Calling tool notepad with args {'thoughts': 'The user has instructed me to go to the farthest screen. \n\nFrom the 3D Octant Observation, I can see four screens:\n- screen(ID:19) at 7.8m in FRONT_RIGHT_BOTTOM\n- screen(ID:22) at 8.7m in FRONT_RIGHT_BOTTOM\n- screen(ID:26) at 8.4m in FRONT_RIGHT_TOP\n- screen(ID:63) at 24.1m in FRONT_RIGHT_BOTTOM\n\nThe farthest screen is screen(ID:63) at 24.1m. However, screen(ID:63) is in room_1, which is connected to room_0 (my current room).\n\nI need to navigate to screen(ID:63) in room_1.'}
+AI Calling tool command_robot with args {'list_of_commands': [['go_near', [63]]]}
 Tool: notepad, Content: Noted and please proceed with the next step!
 Tool: command_robot, Content: The robot has executed the commands successfully, now say 'done'!
 AI: done
 Reasoning: 
-The user instruction is to "go to the table." There are four tables in the scene:
+The user has instructed me to go to the farthest screen. 
 
-- Table(ID:22) in room_0
-- Table(ID:23) in room_0
-- Table(ID:31) in room_0
-- Table(ID:45) in room_1
+From the 3D Octant Observation, I can see four screens:
+- screen(ID:19) at 7.8m in FRONT_RIGHT_BOTTOM
+- screen(ID:22) at 8.7m in FRONT_RIGHT_BOTTOM
+- screen(ID:26) at 8.4m in FRONT_RIGHT_TOP
+- screen(ID:63) at 24.1m in FRONT_RIGHT_BOTTOM
 
-The robot's current position is at (15, 98, 0), which is closer to room_0 based on the grid dimensions (71, 174). Since no specific table is mentioned, I should navigate to the table closest to the robot's current position.
+The farthest screen is screen(ID:63) at 24.1m. However, screen(ID:63) is in room_1, which is connected to room_0 (my current room).
 
-To determine the closest table, I can use the `find_near` tool with the robot's ID (-1) as the anchor.
-The tables are ordered from closest to furthest as follows:
-- Table(ID:22) (index 0)
-- Table(ID:23) (index 1)
-- Table(ID:31) (index 2)
-- Table(ID:45) (index 3)
-
-Since the user did not specify which table, I will navigate to the closest one, which is Table(ID:22).
+I need to navigate to screen(ID:63) in room_1.
 Code:
 def go():
-    go_near(22)
+    go_near(63)

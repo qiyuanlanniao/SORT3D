@@ -283,7 +283,7 @@ class TopologyManager(Node):
                 dist = np.linalg.norm(pos_a - pos_b)
 
                 # --- 抗细脖子判据 ---
-                if bridge_count <= 5 and dist < 6.0:
+                if bridge_count <= 4 and dist < 5.0:
                     merged_core |= core_b
                     used.add(j)
 
@@ -429,7 +429,7 @@ class TopologyManager(Node):
         if len(place_nodes) < 1: return
 
         # --- 1. 模拟持续同调 (Persistent Homology) ---
-        thresholds = np.arange(0.3, 1.2, 0.02)
+        thresholds = np.arange(0.3, 1.8, 0.02)
         betti_0_curve = [] # 记录每个阈值对应的区域数量
         clusters_at_threshold = {}
 
@@ -553,13 +553,17 @@ class TopologyManager(Node):
         self.get_logger().info(f"✅ [[DSG Export] 层级与连通性已打包发送并保存")
 
     def clear_hierarchical_edges(self):
+        # 1. 清理边
         edges_to_remove = []
         for u, v in self.graph.edges():
             types = [self.graph.nodes[u].get('type'), self.graph.nodes[v].get('type')]
-            # 增加对 group 类型的清理
             if 'room' in types or 'building' in types or 'group' in types:
                 edges_to_remove.append((u, v))
         self.graph.remove_edges_from(edges_to_remove)
+
+        # 【关键修复 2】彻底删除旧的 group 节点，防止节点冗余
+        old_groups = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'group']
+        self.graph.remove_nodes_from(old_groups)
 
     def update_building_layer(self):
         room_ids = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'room']
@@ -732,27 +736,27 @@ class TopologyManager(Node):
 
         for i, cluster in enumerate(clusters):
             group_id = f"group_{i}"
-            # 计算组的中心位置
             group_pos = np.mean([self.graph.nodes[obj]['pos'] for obj in cluster], axis=0)
             
-            # 添加组节点
             if not self.graph.has_node(group_id):
                 self.graph.add_node(group_id, type='group', pos=group_pos, label=f"Group {i}")
             else:
                 self.graph.nodes[group_id]['pos'] = group_pos
             
             cluster_list = list(cluster)
-            # --- 【核心修改】 ---
-            # 除了 Object -> Group，还增加 Object <-> Object 的横向连接
-            # 我们给这种边加一个属性，方便在可视化时单独着色
+            for obj in cluster_list:
+                # 【关键修复 1】建立物体到组节点的物理连接，H-CoT 描述才能找到它
+                self.graph.add_edge(obj, group_id)
+
+            # intra_group 连线保持不变，用于 RViz 绘制
             for idx_a in range(len(cluster_list)):
                 for idx_b in range(idx_a + 1, len(cluster_list)):
                     u, v = cluster_list[idx_a], cluster_list[idx_b]
-                    self.graph.add_edge(u, v, edge_type='intra_group') 
+                    self.graph.add_edge(u, v, edge_type='intra_group')
     
     def link_hierarchy_to_rooms(self):
         """
-        第二步：基于几何球体范围判定物体属于哪个房间
+        基于几何球体范围判定物体属于哪个房间
         """
         obj_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'object']
         place_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'place']
