@@ -1,0 +1,35 @@
+{
+    "image": {
+        "crop_coords": [
+            [
+                65,
+                53
+            ],
+            [
+                194,
+                158
+            ]
+        ],
+        "is_caption_generated": true
+    },
+    "centroid": [
+        13.100362777709963,
+        -1.2657474279403682,
+        -0.40859135985374484
+    ],
+    "dimensions": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "heading": 0.0,
+    "largest_face": 0.0,
+    "name": {
+        "string": "cabinet",
+        "similarity_to_image": [
+            3.640625,
+            3.65625,
+            4.375
+        ]
+    }
+}

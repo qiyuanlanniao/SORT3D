@@ -442,7 +442,7 @@ class ObjMapper():
             if single_obj.obj_id[0] >= 0: # not background object
                 single_obj.life += 1
 
-                if single_obj.inactive_frame > 20:
+                if single_obj.inactive_frame > 1000:
                     # self.single_obj_list.remove(single_obj)
                     # self.log_info(f"Remove {single_obj.class_id}:{single_obj.obj_id}")
                     i += 1
@@ -497,7 +497,8 @@ class ObjMapper():
                                 dist_thresh = np.linalg.norm((extent_object/2 + extent_target/2)/2) * 0.5
 
                                 # merge directly if the distance is small
-                                if minimum_dist < dist_thresh or minimum_dist < 0.5:
+                                merge_distance_threshold = 1.5
+                                if minimum_dist < dist_thresh or minimum_dist < merge_distance_threshold:
                                     self.log_info(f"Merge {single_obj.class_id}:{single_obj.obj_id} to {target_obj.class_id}:{target_obj.obj_id} with dist thresh {dist_thresh}")
                                     
                                     merged_obj = True
@@ -667,14 +668,23 @@ class ObjMapper():
                 nanoseconds=nanoseconds,
                 frame_id='map'
             )
+            # --- 1. 获取包围盒的中心和尺寸 ---
+            center_pos = aabb.get_center()  # 原本的中心 [x, y, z]
+            extent = aabb.get_extent()      # 包围盒的尺寸 [长, 宽, 高]
 
+            # --- 2. 计算文字显示的新位置 ---
+            # 逻辑：取中心点 Z 坐标 + (高度的一半) + 一个额外的缓冲偏移(如 0.2米)
+            # 这样文字就会始终悬浮在物体的顶部边缘上方
+            text_z_offset = center_pos[2] + (extent[2] / 2.0) + 0.2
+            text_position = [center_pos[0], center_pos[1], text_z_offset]
 
+            combined_text = f"ID:{single_obj.obj_id[0]}{single_obj.get_dominant_label()}"
             text_msg = ros2_bag_utils.create_text_marker(
-                center=aabb.get_center(),
+                center=text_position,
                 marker_id=single_obj.obj_id[0],
-                text=single_obj.get_dominant_label(),
+                text=combined_text,            
                 color=colors_to_choose[tree_cnt],
-                text_height=0.2,
+                text_height=0.25,                
                 seconds=seconds,
                 nanoseconds=nanoseconds,
                 frame_id='map'

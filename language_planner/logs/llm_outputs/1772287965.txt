@@ -1,0 +1,8 @@
+===============
+INPUT STATEMENT
+===============
+Go to the first chair in front of you.
+===============
+OUTPUT CODE
+===============
+Error: Error response 429 while fetching https://api.mistral.ai/v1/chat/completions: {"object":"error","message":"Rate limit exceeded","type":"rate_limited","param":null,"code":"1300"}
