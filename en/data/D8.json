@@ -1,0 +1,373 @@
+[
+  {
+    "id": -1,
+    "name": "Ego-Robot",
+    "position": [
+      5.0,
+      5.0,
+      1.0
+    ],
+    "room": 0,
+    "caption": "The autonomous agent platform equipped with panoramic sensing. Current mission: Navigate to the farthest identified object across room boundaries."
+  },
+  {
+    "id": 1,
+    "name": "chair",
+    "position": [
+      -3.42,
+      7.15,
+      0.45
+    ],
+    "room": 1,
+    "caption": "The blue ergonomic chair features a breathable mesh backrest and a pneumatic height adjustment lever. It is positioned near the left wall, affording a comfortable workspace for users.",
+    "instruction": "Navigate to the blue ergonomic chair featuring a breathable mesh backrest and a pneumatic height adjustment lever, located near the wall."
+  },
+  {
+    "id": 2,
+    "name": "table",
+    "position": [
+      -8.5,
+      2.31,
+      0.0
+    ],
+    "room": 1,
+    "caption": "A heavy green rectangular table made of solid oak with a polished finish. Its wide surface provides ample space for placing office equipment and performing collaborative team tasks.",
+    "instruction": "Go to the heavy green rectangular table made of solid oak with a polished finish."
+  },
+  {
+    "id": 3,
+    "name": "cabinet",
+    "position": [
+      -1.2,
+      9.4,
+      0.8
+    ],
+    "room": 1,
+    "caption": "This orange metal cabinet contains three secured drawers with silver handles. It is designed for document storage and fits perfectly into the narrow corner of the hallway area.",
+    "instruction": "Find the orange metal cabinet with three secured drawers and silver handles located in the corner of the hallway area."
+  },
+  {
+    "id": 4,
+    "name": "screen",
+    "position": [
+      -5.6,
+      5.0,
+      1.2
+    ],
+    "room": 1,
+    "caption": "A purple high-definition display monitor mounted on an adjustable swivel arm. It affords clear visibility of system data and is connected via a thick black cable to the desk below.",
+    "instruction": "Navigate to the purple high-definition display monitor mounted on an adjustable swivel arm and connected by a thick black cable."
+  },
+  {
+    "id": 5,
+    "name": "chair",
+    "position": [
+      -9.1,
+      -4.5,
+      0.45
+    ],
+    "room": 2,
+    "caption": "A blue folding chair with a lightweight aluminum frame. It is currently placed against the partition, providing temporary seating that can be easily stored when the floor space is needed.",
+    "instruction": "Find the blue folding chair with a lightweight aluminum frame that is placed against the partition."
+  },
+  {
+    "id": 6,
+    "name": "table",
+    "position": [
+      -2.3,
+      -8.7,
+      0.0
+    ],
+    "room": 2,
+    "caption": "The green circular table sits on a tripod base. It is ideal for small coffee breaks and affords enough surface area for two laptops and several notebooks in a lounge setting.",
+    "instruction": "Go to the green circular table supported by a tripod base."
+  },
+  {
+    "id": 7,
+    "name": "cabinet",
+    "position": [
+      -7.4,
+      -2.1,
+      0.9
+    ],
+    "room": 2,
+    "caption": "An orange wooden bookshelf cabinet with glass sliding doors. It displays several technical manuals and affords a clear view of the organized items stored within its internal shelves.",
+    "instruction": "Navigate to the orange wooden bookshelf cabinet featuring glass sliding doors and containing technical manuals."
+  },
+  {
+    "id": 8,
+    "name": "screen",
+    "position": [
+      -4.8,
+      -7.2,
+      1.5
+    ],
+    "room": 2,
+    "caption": "This purple flat-screen television is fixed to the upper wall. It is used for displaying public announcements and affords a wide viewing angle for everyone present in the common area.",
+    "instruction": "Go to the purple flat-screen television fixed to the upper wall."
+  },
+  {
+    "id": 9,
+    "name": "chair",
+    "position": [
+      4.5,
+      -3.2,
+      0.5
+    ],
+    "room": 3,
+    "caption": "The blue rolling office chair is equipped with five multi-directional casters. It allows for seamless movement across the hardwood floor and features padded armrests for enhanced user support.",
+    "instruction": "Navigate to the blue rolling office chair equipped with padded armrests and five multi-directional casters."
+  },
+  {
+    "id": 10,
+    "name": "table",
+    "position": [
+      7.1,
+      -9.5,
+      0.0
+    ],
+    "room": 3,
+    "caption": "A green drafting table with a tilted top surface. It is specialized for architectural sketching and affords a precise angle for manual drawing while maintaining structural stability.",
+    "instruction": "Find the green drafting table with a tilted top surface designed for architectural sketching."
+  },
+  {
+    "id": 11,
+    "name": "cabinet",
+    "position": [
+      2.8,
+      -5.4,
+      0.0
+    ],
+    "room": 3,
+    "caption": "This orange filing cabinet has a fireproof coating and a central locking mechanism. It provides safe keeping for sensitive records and is placed next to the main entrance door.",
+    "instruction": "Go to the fireproof orange filing cabinet with a central locking mechanism located next to the main entrance door."
+  },
+  {
+    "id": 12,
+    "name": "screen",
+    "position": [
+      9.3,
+      -1.8,
+      1.1
+    ],
+    "room": 3,
+    "caption": "A purple digital signage screen oriented vertically. It flickers with bright advertisements and affords an interactive touch interface for visitors to check the building directory information.",
+    "instruction": "Navigate to the vertically oriented purple digital signage screen that features an interactive touch interface."
+  },
+  {
+    "id": 13,
+    "name": "chair",
+    "position": [
+      -2.5,
+      1.5,
+      0.5
+    ],
+    "room": 1,
+    "caption": "A blue stool-style chair with no backrest. It is made of industrial plastic and affords quick seating for short meetings or casual laboratory observations near the equipment.",
+    "instruction": "Go to the blue stool-style chair made of industrial plastic that has no backrest."
+  },
+  {
+    "id": 14,
+    "name": "table",
+    "position": [
+      -4.0,
+      8.0,
+      0.0
+    ],
+    "room": 1,
+    "caption": "The green conference table is exceptionally long and can accommodate ten people. It has built-in power outlets and affords a professional environment for high-stakes board meetings.",
+    "instruction": "Navigate to the exceptionally long green conference table that features built-in power outlets."
+  },
+  {
+    "id": 15,
+    "name": "cabinet",
+    "position": [
+      -6.0,
+      3.0,
+      0.0
+    ],
+    "room": 1,
+    "caption": "An orange low-profile storage cabinet that doubles as a bench. It features a cushioned top and affords extra seating while hiding various office supplies in its deep compartments.",
+    "instruction": "Find the orange low-profile storage cabinet with a cushioned top that doubles as a bench."
+  },
+  {
+    "id": 16,
+    "name": "screen",
+    "position": [
+      -2.0,
+      6.0,
+      1.2
+    ],
+    "room": 1,
+    "caption": "A purple secondary monitor used for vertical coding. It has an anti-glare coating and affords a crisp view of long scripts, reducing eye strain during extended work sessions.",
+    "instruction": "Go to the purple secondary monitor with an anti-glare coating oriented for vertical coding."
+  },
+  {
+    "id": 17,
+    "name": "chair",
+    "position": [
+      -5.0,
+      -5.0,
+      0.45
+    ],
+    "room": 2,
+    "caption": "This blue lounge chair is covered in soft velvet. It is designed for relaxation and affords a deep seating position, perfect for reading books in the quiet zone.",
+    "instruction": "Navigate to the blue lounge chair covered in soft velvet, designed for a deep seating position."
+  },
+  {
+    "id": 18,
+    "name": "table",
+    "position": [
+      -1.0,
+      -1.0,
+      0.0
+    ],
+    "room": 2,
+    "caption": "A small green side table with a glass top. It sits between two chairs and affords a convenient spot for placing drinks or decorative items like flower vases.",
+    "instruction": "Find the small green side table with a glass top situated between two chairs."
+  },
+  {
+    "id": 19,
+    "name": "cabinet",
+    "position": [
+      -9.0,
+      -9.0,
+      0.0
+    ],
+    "room": 2,
+    "caption": "Large orange pantry cabinet used for storing kitchen supplies. It has multiple adjustable shelves and affords a highly organized system for managing various food containers and utensils.",
+    "instruction": "Go to the large orange pantry cabinet featuring multiple adjustable shelves for storage."
+  },
+  {
+    "id": 20,
+    "name": "screen",
+    "position": [
+      -3.0,
+      -3.0,
+      1.3
+    ],
+    "room": 2,
+    "caption": "A purple wall-mounted tablet used for smart home control. It displays temperature and lighting settings and affords quick adjustments to the room's environmental conditions via touch.",
+    "instruction": "Navigate to the purple wall-mounted tablet used for smart home control."
+  },
+  {
+    "id": 21,
+    "name": "chair",
+    "position": [
+      1.0,
+      -1.0,
+      0.5
+    ],
+    "room": 3,
+    "caption": "A blue executive chair with premium leather upholstery. It features synchronized tilt and affords a high-end feel for the primary occupant of the corner office suite.",
+    "instruction": "Find the blue executive chair featuring premium leather upholstery and synchronized tilt."
+  },
+  {
+    "id": 22,
+    "name": "table",
+    "position": [
+      3.0,
+      -3.0,
+      0.0
+    ],
+    "room": 3,
+    "caption": "The green pedestal table is made of weather-resistant composite. It is designed for durability and affords a stable surface even in high-traffic or semi-outdoor transitions.",
+    "instruction": "Go to the green pedestal table made of weather-resistant composite."
+  },
+  {
+    "id": 23,
+    "name": "cabinet",
+    "position": [
+      5.0,
+      -5.0,
+      0.0
+    ],
+    "room": 3,
+    "caption": "Compact orange bedside-style cabinet with a single drawer. It is used here for storing small electronics and affords a clutter-free surface for a desktop lamp.",
+    "instruction": "Navigate to the compact orange bedside-style cabinet featuring a single drawer."
+  },
+  {
+    "id": 24,
+    "name": "screen",
+    "position": [
+      7.0,
+      -7.0,
+      1.2
+    ],
+    "room": 3,
+    "caption": "A purple large-format projector screen retracted into the ceiling. It is used for weekly presentations and affords a massive 120-inch display area when fully extended down.",
+    "instruction": "Find the purple large-format projector screen currently retracted into the ceiling."
+  },
+  {
+    "id": 25,
+    "name": "chair",
+    "position": [
+      -1.5,
+      8.5,
+      0.45
+    ],
+    "room": 1,
+    "caption": "A blue child-sized chair with a playful design. It is made of safe, non-toxic plastic and affords a stable seating option for younger visitors in the waiting area.",
+    "instruction": "Navigate to the blue child-sized chair made of non-toxic plastic with a playful design."
+  },
+  {
+    "id": 26,
+    "name": "table",
+    "position": [
+      -7.5,
+      4.5,
+      0.0
+    ],
+    "room": 1,
+    "caption": "The green height-adjustable standing desk. It features an electric motor and affords the user the ability to switch between sitting and standing positions with one button.",
+    "instruction": "Go to the green height-adjustable standing desk equipped with an electric motor."
+  },
+  {
+    "id": 27,
+    "name": "cabinet",
+    "position": [
+      -4.5,
+      1.5,
+      0.0
+    ],
+    "room": 1,
+    "caption": "Orange tool cabinet on heavy-duty wheels. It stores various maintenance kits and affords quick access to screwdrivers and wrenches for on-site repairs within the facility.",
+    "instruction": "Find the orange tool cabinet on heavy-duty wheels used for storing maintenance kits."
+  },
+  {
+    "id": 28,
+    "name": "screen",
+    "position": [
+      -8.5,
+      9.5,
+      1.0
+    ],
+    "room": 1,
+    "caption": "A purple curved gaming monitor with a high refresh rate. It is placed on a dedicated gaming rig and affords an immersive visual experience for simulator training.",
+    "instruction": "Navigate to the purple curved gaming monitor with a high refresh rate mounted on a dedicated gaming rig."
+  },
+  {
+    "id": 29,
+    "name": "chair",
+    "position": [
+      -8.0,
+      -2.0,
+      0.45
+    ],
+    "room": 2,
+    "caption": "This blue mesh task chair is designed for breathability. It has built-in lumbar support and affords an ergonomic posture for data entry tasks in the lab.",
+    "instruction": "Go to the blue mesh task chair featuring built-in lumbar support."
+  },
+  {
+    "id": 30,
+    "name": "table",
+    "position": [
+      2.0,
+      -8.0,
+      0.0
+    ],
+    "room": 3,
+    "caption": "The green outdoor-style picnic table. It is constructed from recycled materials and affords a robust, maintenance-free surface for heavy usage in common transition zones.",
+    "instruction": "Navigate to the green outdoor-style picnic table constructed from recycled materials."
+  }
+]

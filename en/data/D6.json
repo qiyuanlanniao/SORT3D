@@ -1,0 +1,194 @@
+[
+  {
+    "id": -1,
+    "name": "Ego-Robot",
+    "position": [
+      5.0,
+      5.0,
+      1.0
+    ],
+    "room": 0,
+    "color": "red",
+    "caption": "The autonomous agent navigating the environment. It is currently positioned in the center of Room 0, equipped with a 360-degree LiDAR and panoramic vision system for real-time spatial reasoning."
+  },
+  {
+    "id": 1,
+    "name": "chair",
+    "position": [
+      1.2,
+      0.8,
+      0.45
+    ],
+    "room": 0,
+    "caption": "A modern blue chair crafted from reinforced plastic with a sleek matte finish. Its ergonomic design features a breathable mesh backrest and four lightweight aluminum legs, providing sturdy support for long periods of sitting.",
+    "instruction": "Go to the modern blue matte-finish plastic chair that features a breathable mesh backrest and four lightweight aluminum legs."
+  },
+  {
+    "id": 2,
+    "name": "table",
+    "position": [
+      8.5,
+      1.5,
+      0.75
+    ],
+    "room": 0,
+    "caption": "A heavy green wooden table with a broad, rectangular surface. The wood grain is visible under a thick layer of protective varnish, and the structure is supported by four massive square-shaped timber legs.",
+    "instruction": "Navigate to the heavy green wooden rectangular table supported by four massive square-shaped timber legs."
+  },
+  {
+    "id": 3,
+    "name": "cabinet",
+    "position": [
+      0.5,
+      9.2,
+      1.2
+    ],
+    "room": 0,
+    "caption": "An orange industrial-style cabinet made of cold-rolled steel. It contains three deep sliding drawers with silver metallic handles, commonly used for storing heavy tools or organized office documents in a workshop environment.",
+    "instruction": "Find the orange industrial-style steel cabinet containing three deep sliding drawers with silver metallic handles."
+  },
+  {
+    "id": 4,
+    "name": "screen",
+    "position": [
+      9.1,
+      8.8,
+      1.5
+    ],
+    "room": 0,
+    "caption": "A high-definition purple screen with an ultra-thin bezel. The glossy display is mounted on a flexible wall bracket, showing its capability for tilt adjustment and multi-angle viewing in a modern living space.",
+    "instruction": "Go to the high-definition purple screen with an ultra-thin bezel that is mounted on a flexible wall bracket."
+  },
+  {
+    "id": 5,
+    "name": "chair",
+    "position": [
+      8.2,
+      0.8,
+      0.42
+    ],
+    "room": 0,
+    "caption": "This blue fabric-covered chair features a swivel base with five smooth-rolling casters. It includes adjustable armrests and a high backrest, designed to improve posture during intensive computer-based tasks or gaming sessions.",
+    "instruction": "Navigate to the blue fabric-covered chair equipped with a swivel base, five smooth-rolling casters, and adjustable armrests."
+  },
+  {
+    "id": 6,
+    "name": "table",
+    "position": [
+      1.8,
+      1.1,
+      0.72
+    ],
+    "room": 0,
+    "caption": "A small green side table made of eco-friendly bamboo. It has a minimalist tripod base and a circular top, perfect for holding a single lamp or a cup of coffee near a seating area.",
+    "instruction": "Find the small green side table made of bamboo with a circular top and a minimalist tripod base."
+  },
+  {
+    "id": 7,
+    "name": "cabinet",
+    "position": [
+      8.9,
+      9.4,
+      0.9
+    ],
+    "room": 0,
+    "caption": "A wide orange storage cabinet with frosted glass doors. The interior is divided by adjustable wooden shelves, offering a versatile solution for displaying decorative glassware or storing books away from dust.",
+    "instruction": "Navigate to the wide orange storage cabinet featuring frosted glass doors and adjustable wooden shelves inside."
+  },
+  {
+    "id": 8,
+    "name": "screen",
+    "position": [
+      0.3,
+      0.7,
+      1.6
+    ],
+    "room": 0,
+    "caption": "A massive purple flat-panel screen positioned on a low-profile stand. The dark reflective surface indicates it is likely a high-end OLED display, offering deep contrast and vibrant colors for professional video editing.",
+    "instruction": "Go to the massive purple OLED flat-panel screen positioned on a low-profile stand."
+  },
+  {
+    "id": 9,
+    "name": "chair",
+    "position": [
+      0.6,
+      8.4,
+      0.44
+    ],
+    "room": 0,
+    "caption": "A blue folding chair with a durable steel frame. The seat and backrest are made of weather-resistant nylon, making it highly portable and suitable for both temporary indoor seating and outdoor events.",
+    "instruction": "Find the blue folding chair built with a durable steel frame and a weather-resistant nylon seat."
+  },
+  {
+    "id": 10,
+    "name": "table",
+    "position": [
+      9.4,
+      1.9,
+      0.76
+    ],
+    "room": 0,
+    "caption": "A green glass-top table featuring a unique interlocking metal base. The tempered glass is scratch-resistant and transparent, revealing the complex geometric design of the support structure underneath.",
+    "instruction": "Navigate to the green glass-top table featuring a transparent surface and a unique interlocking metal base."
+  },
+  {
+    "id": 11,
+    "name": "cabinet",
+    "position": [
+      1.4,
+      0.2,
+      1.1
+    ],
+    "room": 0,
+    "caption": "A tall orange wooden cabinet with ornate carvings on its pillars. This traditional piece of furniture offers two large compartments behind solid oak doors, finished with antique brass locks and keyholes.",
+    "instruction": "Go to the tall orange wooden cabinet with ornate carvings on its pillars and antique brass locks on the oak doors."
+  },
+  {
+    "id": 12,
+    "name": "screen",
+    "position": [
+      8.1,
+      0.4,
+      1.45
+    ],
+    "room": 0,
+    "caption": "A compact purple screen with a matte screen surface. It is connected via a standard HDMI cable and is currently powered off, showing a clean, dark facade in a professional workspace.",
+    "instruction": "Find the compact purple screen with a matte screen surface that is connected via an HDMI cable."
+  },
+  {
+    "id": 13,
+    "name": "chair",
+    "position": [
+      9.6,
+      9.7,
+      0.48
+    ],
+    "room": 0,
+    "caption": "A luxury blue velvet chair with deep button tufting. The plush fabric provides a soft texture, while the dark walnut legs add a touch of classic elegance to the corner of the room.",
+    "instruction": "Navigate to the luxury blue velvet chair featuring deep button tufting and dark walnut legs."
+  },
+  {
+    "id": 14,
+    "name": "table",
+    "position": [
+      0.9,
+      8.7,
+      0.78
+    ],
+    "room": 0,
+    "caption": "A long green conference table made of composite materials. It features built-in power outlets and cable management tracks, designed to accommodate multiple users during collaborative group meetings.",
+    "instruction": "Go to the long green conference table that features built-in power outlets and cable management tracks."
+  },
+  {
+    "id": 15,
+    "name": "cabinet",
+    "position": [
+      8.6,
+      0.3,
+      1.05
+    ],
+    "room": 0,
+    "caption": "A slim orange cabinet designed to fit into tight corners. It has a vertical orientation with five separate cubby holes, providing an efficient way to organize small items or personal belongings.",
+    "instruction": "Find the slim orange vertical cabinet designed for corners, containing five separate cubby holes."
+  }
+]

@@ -1,0 +1,134 @@
+[
+  {
+    "id": -1,
+    "name": "Ego-Robot",
+    "position": [
+      5.0,
+      5.0,
+      1.0
+    ],
+    "room": 0,
+    "color": "red",
+    "caption": "The autonomous agent navigating the environment. It is currently positioned in the center of Room 0, equipped with a 360-degree LiDAR and panoramic vision system for real-time spatial reasoning."
+  },
+  {
+    "id": 1,
+    "name": "chair",
+    "position": [
+      6.2,
+      6.5,
+      1.8
+    ],
+    "room": 0,
+    "caption": "A modern black ergonomic office chair with a breathable mesh backrest and adjustable armrests, positioned firmly on a silver metallic base with five smooth-rolling casters.",
+    "instruction": "Navigate to the black ergonomic office chair that features a breathable mesh backrest and a silver metallic base with five smooth-rolling casters."
+  },
+  {
+    "id": 2,
+    "name": "table",
+    "position": [
+      6.8,
+      6.2,
+      0.4
+    ],
+    "room": 0,
+    "caption": "A small rectangular wooden side table featuring a polished oak surface and minimalist legs, showing a clean grain pattern and a slight gloss under the room lights.",
+    "instruction": "Go to the small rectangular side table made of polished oak wood, characterized by its clean grain pattern and minimalist legs."
+  },
+  {
+    "id": 3,
+    "name": "cabinet",
+    "position": [
+      7.1,
+      3.5,
+      2.1
+    ],
+    "room": 0,
+    "caption": "A tall wall-mounted steel storage cabinet with two hinged doors and a matte gray finish, used for organizing heavy mechanical tools and industrial supplies safely.",
+    "instruction": "Find the tall wall-mounted steel storage cabinet with a matte gray finish and two hinged doors designed for industrial supplies."
+  },
+  {
+    "id": 4,
+    "name": "screen",
+    "position": [
+      5.5,
+      2.8,
+      0.5
+    ],
+    "room": 0,
+    "caption": "A slim 24-inch screen with an anti-glare coating and thin black bezels, currently powered off and resting on a flexible low-profile stand.",
+    "instruction": "Navigate to the 24-inch screen with thin black bezels that is currently powered off and resting on a low-profile stand."
+  },
+  {
+    "id": 5,
+    "name": "chair",
+    "position": [
+      3.2,
+      7.4,
+      1.5
+    ],
+    "room": 0,
+    "caption": "A lightweight stackable plastic chair in a vibrant blue color, designed with a curved seat for comfort and reinforced steel legs for high durability in communal areas.",
+    "instruction": "Go to the vibrant blue stackable plastic chair designed with a curved seat and reinforced steel legs."
+  },
+  {
+    "id": 6,
+    "name": "table",
+    "position": [
+      2.5,
+      5.8,
+      0.2
+    ],
+    "room": 0,
+    "caption": "A low-profile circular coffee table made of tempered glass and a dark walnut frame, providing a stable surface for magazines and small decorative household items.",
+    "instruction": "Find the low-profile circular coffee table featuring a tempered glass top and a dark walnut frame."
+  },
+  {
+    "id": 7,
+    "name": "cabinet",
+    "position": [
+      4.1,
+      3.9,
+      2.4
+    ],
+    "room": 0,
+    "caption": "A suspended wooden cabinet with frosted glass panels and built-in LED spotlights, ideal for displaying fragile glassware or expensive decorative ceramics in a modern kitchen.",
+    "instruction": "Navigate to the suspended wooden cabinet with frosted glass panels and built-in LED spotlights used for displaying glassware."
+  },
+  {
+    "id": 8,
+    "name": "screen",
+    "position": [
+      3.8,
+      4.2,
+      0.1
+    ],
+    "room": 0,
+    "caption": "A portable liquid crystal screen with a foldable protective cover, laid horizontally on a low shelf, featuring high-resolution capabilities for mobile professional work.",
+    "instruction": "Go to the portable liquid crystal screen with a foldable cover that is laid horizontally on a low shelf."
+  },
+  {
+    "id": 9,
+    "name": "chair",
+    "position": [
+      5.9,
+      7.1,
+      1.2
+    ],
+    "room": 0,
+    "caption": "An upholstered gray fabric swivel chair with a compact design, featuring high-density foam padding and a heavy-duty pneumatic lift for precision height adjustments during use.",
+    "instruction": "Find the compact gray fabric swivel chair that is upholstered with high-density foam and equipped with a pneumatic lift."
+  },
+  {
+    "id": 10,
+    "name": "table",
+    "position": [
+      3.1,
+      2.9,
+      0.8
+    ],
+    "room": 0,
+    "caption": "A narrow metal table with a textured black surface and integrated power strips, designed for heavy-duty electronics repair and soldering tasks in a laboratory setting.",
+    "instruction": "Navigate to the narrow metal table with a textured black surface and integrated power strips for electronics repair."
+  }
+]

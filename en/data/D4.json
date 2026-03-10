@@ -1,0 +1,74 @@
+[
+  {
+    "id": -1,
+    "name": "Ego-Robot",
+    "position": [
+      5.0,
+      5.0,
+      1.0
+    ],
+    "room": 0,
+    "color": "red",
+    "caption": "The autonomous agent navigating the environment. It is currently positioned in the center of Room 0, equipped with a 360-degree LiDAR and panoramic vision system for real-time spatial reasoning."
+  },
+  {
+    "id": 1,
+    "name": "chair",
+    "position": [
+      9.2,
+      8.5,
+      2.5
+    ],
+    "room": 0,
+    "caption": "A lightweight ergonomic chair with a black mesh backrest and silver metal legs, suitable for modern office environments and providing comfortable lumbar support.",
+    "instruction": "Go to the lightweight ergonomic chair that features a black mesh backrest and silver metal legs."
+  },
+  {
+    "id": 2,
+    "name": "table",
+    "position": [
+      8.8,
+      1.2,
+      2.2
+    ],
+    "room": 0,
+    "caption": "A rectangular wooden dining table with a polished oak surface and sturdy legs, appearing to be part of a formal dining set for four people.",
+    "instruction": "Navigate to the rectangular wooden dining table with a polished oak surface and sturdy legs, designed for a formal set of four people."
+  },
+  {
+    "id": 3,
+    "name": "cabinet",
+    "position": [
+      9.5,
+      9.1,
+      0.4
+    ],
+    "room": 0,
+    "caption": "A low-profile white storage cabinet with two sliding doors and metallic handles, used for organizing documents or household essentials efficiently.",
+    "instruction": "Find the low-profile white storage cabinet equipped with two sliding doors and metallic handles."
+  },
+  {
+    "id": 4,
+    "name": "screen",
+    "position": [
+      8.5,
+      0.5,
+      0.2
+    ],
+    "room": 0,
+    "caption": "A large flat-panel liquid crystal screen resting on a low stand, currently powered off with its black glass surface reflecting the room light.",
+    "instruction": "Go to the large flat-panel liquid crystal screen resting on a low stand with a black reflective glass surface."
+  },
+  {
+    "id": 5,
+    "name": "chair",
+    "position": [
+      1.5,
+      8.8,
+      2.4
+    ],
+    "room": 0,
+    "caption": "A blue fabric upholstered chair featuring a curved backrest and padded seat, offering a splash of color to the corner of the room.",
+    "instruction": "Navigate to the blue fabric upholstered chair with a curved backrest and padded seat located in the corner of the room."
+  }
+]

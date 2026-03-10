@@ -1,0 +1,410 @@
+[
+  {
+    "id": -1,
+    "name": "Ego-Robot",
+    "position": [5.0, 5.0, 1.0],
+    "room": 0,
+    "color": "red",
+    "caption": "The autonomous agent navigating the environment. It is currently positioned in the center of Room 0, equipped with a 360-degree LiDAR and panoramic vision system for real-time spatial reasoning."
+  },
+  {
+    "id": 1,
+    "name": "chair",
+    "position": [-4.52, 7.12, 0.45],
+    "room": 1,
+    "caption": "A modern ergonomic office chair upholstered in dark fabric. It features a high backrest, adjustable armrests, and a sturdy five-star base with rolling casters for easy movement on the office floor.",
+    "instruction": "Go to the modern ergonomic office chair upholstered in dark fabric, identifiable by its high backrest, adjustable armrests, and five-star base with rolling casters."
+  },
+  {
+    "id": 2,
+    "name": "table",
+    "position": [-7.81, 2.34, 0.75],
+    "room": 1,
+    "caption": "A rectangular wooden dining table with a polished oak surface. It stands on four thick tapered legs and appears large enough to accommodate at least six people comfortably for a family meal.",
+    "instruction": "Find the rectangular wooden dining table featuring a polished oak surface and four thick tapered legs."
+  },
+  {
+    "id": 3,
+    "name": "cabinet",
+    "position": [-1.25, -6.44, 1.10],
+    "room": 2,
+    "caption": "A tall storage cabinet made of metal with a matte orange finish. It has two large swinging doors with silver handles and contains multiple internal shelves for organizing various industrial equipment.",
+    "instruction": "Navigate to the tall, matte orange metal storage cabinet that has two large swinging doors with silver handles."
+  },
+  {
+    "id": 4,
+    "name": "screen",
+    "position": [3.44, -8.12, 1.45],
+    "room": 3,
+    "caption": "A wide-screen computer monitor mounted on an adjustable metal arm. The display has a thin bezel and a matte anti-glare coating, currently reflecting a soft blue glow from the room's overhead lighting.",
+    "instruction": "Go to the wide-screen computer monitor mounted on an adjustable metal arm, featuring a thin bezel and a matte anti-glare coating."
+  },
+  {
+    "id": 5,
+    "name": "chair",
+    "position": [-8.90, -2.11, 0.40],
+    "room": 2,
+    "caption": "A simple wooden side chair with a minimalist design. It consists of a flat square seat and a vertical slatted backrest, showing a natural grain pattern under the bright room lights.",
+    "instruction": "Find the minimalist wooden side chair consisting of a flat square seat and a vertical slatted backrest."
+  },
+  {
+    "id": 6,
+    "name": "cabinet",
+    "position": [8.11, -4.50, 0.90],
+    "room": 3,
+    "caption": "A low-profile filing cabinet with three sliding drawers. The top surface is covered with a protective laminate, and each drawer has a small label holder made of polished yellow brass.",
+    "instruction": "Navigate to the low-profile filing cabinet with three sliding drawers, each fitted with a polished yellow brass label holder."
+  },
+  {
+    "id": 7,
+    "name": "table",
+    "position": [-3.15, -7.88, 0.72],
+    "room": 2,
+    "caption": "A small circular coffee table with a tempered glass top and a crossed metal frame. Its transparent surface reveals a collection of colorful magazines neatly arranged on the wire shelf underneath.",
+    "instruction": "Go to the small circular coffee table with a tempered glass top and a crossed metal frame."
+  },
+  {
+    "id": 8,
+    "name": "screen",
+    "position": [-2.50, 9.15, 1.20],
+    "room": 1,
+    "caption": "A large flat-panel television fixed securely to the wall. The screen is currently black, indicating it is powered off, and its glossy frame reflects the opposite side of the quiet room.",
+    "instruction": "Navigate to the large wall-mounted flat-panel television featuring a glossy frame."
+  },
+  {
+    "id": 9,
+    "name": "cabinet",
+    "position": [-9.40, 5.60, 2.10],
+    "room": 1,
+    "caption": "A wall-mounted kitchen cabinet with frosted glass doors. It is positioned high above the counter level and used for storing delicate glassware and white ceramic plates in an organized manner.",
+    "instruction": "Find the kitchen cabinet with frosted glass doors that is mounted high on the wall."
+  },
+  {
+    "id": 10,
+    "name": "chair",
+    "position": [1.45, -1.50, 0.42],
+    "room": 3,
+    "caption": "A soft upholstered armchair covered in a light blue velvet material. It has deep seat cushions and rounded armrests, inviting someone to sit and relax in the quiet corner of the room.",
+    "instruction": "Go to the upholstered armchair covered in light blue velvet material with deep seat cushions and rounded armrests."
+  },
+  {
+    "id": 11,
+    "name": "table",
+    "position": [6.70, -9.20, 0.75],
+    "room": 3,
+    "caption": "A heavy industrial workbench with a reinforced steel frame and a thick plywood top. Several small hand tools are scattered across the surface near a heavy-duty metal vice bolted to the edge.",
+    "instruction": "Navigate to the industrial workbench with a reinforced steel frame and a thick plywood top, identifiable by the heavy-duty metal vice bolted to its edge."
+  },
+  {
+    "id": 12,
+    "name": "screen",
+    "position": [-5.50, -5.50, 1.05],
+    "room": 2,
+    "caption": "A digital photo frame displaying a rotating gallery of vibrant landscape images. The screen is bright, encased in a simple black frame that matches the nearby modern office decor.",
+    "instruction": "Find the bright digital photo frame encased in a simple black frame."
+  },
+  {
+    "id": 13,
+    "name": "cabinet",
+    "position": [2.30, -3.10, 0.85],
+    "room": 3,
+    "caption": "A compact bedside nightstand with a single drawer and an open lower compartment. It is crafted from light-colored pine wood and has a small ceramic lamp resting on its flat top.",
+    "instruction": "Go to the compact pine wood bedside nightstand featuring a single drawer and an open lower compartment."
+  },
+  {
+    "id": 14,
+    "name": "chair",
+    "position": [-7.20, 4.30, 0.44],
+    "room": 1,
+    "caption": "A plastic stacking chair in a bright primary blue color. It is lightweight and waterproof, designed for use in high-traffic areas like a school cafeteria or a public waiting room setting.",
+    "instruction": "Navigate to the lightweight, bright primary blue plastic stacking chair."
+  },
+  {
+    "id": 15,
+    "name": "table",
+    "position": [-4.10, -1.20, 1.00],
+    "room": 2,
+    "caption": "A height-adjustable standing desk with a clean white laminate surface. A small control panel on the front edge allows the user to save preferred heights for ergonomic working positions.",
+    "instruction": "Go to the height-adjustable standing desk featuring a clean white laminate surface and a control panel on the front edge."
+  },
+  {
+    "id": 16,
+    "name": "chair",
+    "position": [-2.11, 3.45, 0.45],
+    "room": 1,
+    "caption": "An elegant dining chair with a tall backrest and a padded seat covered in cream-colored linen fabric. The legs are made of dark stained wood with protective felt pads on the bottom.",
+    "instruction": "Find the elegant dining chair with a tall backrest and a padded seat covered in cream-colored linen fabric."
+  },
+  {
+    "id": 17,
+    "name": "screen",
+    "position": [-8.22, -4.11, 1.30],
+    "room": 2,
+    "caption": "A thin tablet device lying flat on a nearby surface. Its touchscreen is covered in fingerprints, and the metallic silver casing glints under the room's warm yellow light sources.",
+    "instruction": "Navigate to the thin tablet device with a metallic silver casing that is lying flat on a surface."
+  },
+  {
+    "id": 18,
+    "name": "cabinet",
+    "position": [5.60, -7.20, 1.80],
+    "room": 3,
+    "caption": "A large wooden wardrobe with integrated mirrors on the front doors. It occupies most of the wall space and provides ample room for hanging clothes and storing folded linens.",
+    "instruction": "Go to the large wooden wardrobe featuring integrated mirrors on its front doors."
+  },
+  {
+    "id": 19,
+    "name": "table",
+    "position": [-9.10, 8.50, 0.75],
+    "room": 1,
+    "caption": "A long conference table with a grey stone-like finish. It has built-in cable management ports and is surrounded by several matching chairs for professional business meetings.",
+    "instruction": "Navigate to the long conference table featuring a grey stone-like finish and built-in cable management ports."
+  },
+  {
+    "id": 20,
+    "name": "chair",
+    "position": [3.40, -5.20, 0.48],
+    "room": 3,
+    "caption": "A swivel stool with a polished chrome base and a bright red vinyl seat. It is positioned at counter height, suitable for use in a modern kitchen or a bar area.",
+    "instruction": "Find the counter-height swivel stool featuring a polished chrome base and a bright red vinyl seat."
+  },
+  {
+    "id": 21,
+    "name": "cabinet",
+    "position": [-3.45, 0.50, 0.90],
+    "room": 1,
+    "caption": "A low credenza made of dark walnut wood with four sliding panels. It features a minimalist handle-less design and serves as a base for decorative items and electronic components.",
+    "instruction": "Go to the low dark walnut credenza featuring a handle-less design and four sliding panels."
+  },
+  {
+    "id": 22,
+    "name": "screen",
+    "position": [7.30, -2.15, 1.10],
+    "room": 3,
+    "caption": "A curved gaming monitor with a fast refresh rate. The back of the monitor features customizable RGB lighting that casts a soft purple glow against the adjacent wall surface.",
+    "instruction": "Navigate to the curved gaming monitor that has customizable RGB lighting on its back."
+  },
+  {
+    "id": 23,
+    "name": "table",
+    "position": [-6.70, -3.20, 0.75],
+    "room": 2,
+    "caption": "A small square end table with a black wrought iron frame and a reclaimed wood top. It is perfectly sized to hold a cup of coffee and a small table lamp.",
+    "instruction": "Find the small square end table with a black wrought iron frame and a reclaimed wood top."
+  },
+  {
+    "id": 24,
+    "name": "chair",
+    "position": [-1.50, 6.70, 0.42],
+    "room": 1,
+    "caption": "A folding metal chair with a simple industrial look. It is painted in a slate grey color and can be easily collapsed for storage when not in use during events.",
+    "instruction": "Go to the slate grey folding metal chair designed with a simple industrial look."
+  },
+  {
+    "id": 25,
+    "name": "cabinet",
+    "position": [-7.80, -8.40, 1.20],
+    "room": 2,
+    "caption": "A vintage wooden chest of drawers with decorative brass handles. The surface shows some signs of wear, adding character to this classical piece of bedroom furniture in the corner.",
+    "instruction": "Navigate to the vintage wooden chest of drawers located in the corner, featuring decorative brass handles."
+  },
+  {
+    "id": 26,
+    "name": "screen",
+    "position": [-4.20, 2.10, 1.40],
+    "room": 1,
+    "caption": "A laptop computer sitting open on a desk. The bright screen displays a complex spreadsheet with various charts, and the backlit keyboard is visible in the dim room.",
+    "instruction": "Find the open laptop computer on the desk, identifiable by its bright screen and backlit keyboard."
+  },
+  {
+    "id": 27,
+    "name": "table",
+    "position": [2.50, -6.80, 0.72],
+    "room": 3,
+    "caption": "A glass-top hall table with a narrow profile. It has a decorative gold-leafed frame and is typically used to display a vase of flowers or a collection of family photographs.",
+    "instruction": "Go to the narrow hall table featuring a glass top and a decorative gold-leafed frame."
+  },
+  {
+    "id": 28,
+    "name": "chair",
+    "position": [-8.50, -5.50, 0.44],
+    "room": 2,
+    "caption": "A high-back executive chair upholstered in premium black leather. It has a thick padded seat and chrome armrests, providing a professional look for a home office or study.",
+    "instruction": "Navigate to the high-back executive chair upholstered in premium black leather with chrome armrests."
+  },
+  {
+    "id": 29,
+    "name": "cabinet",
+    "position": [1.10, -9.10, 0.85],
+    "room": 3,
+    "caption": "A small medicine cabinet with a mirrored door. It is designed to be mounted on the wall above a bathroom sink for storing toiletries and personal care items safely.",
+    "instruction": "Find the wall-mounted medicine cabinet featuring a mirrored door."
+  },
+  {
+    "id": 30,
+    "name": "screen",
+    "position": [-9.30, -0.50, 1.25],
+    "room": 2,
+    "caption": "A smart thermostat screen mounted on the wall. The small circular display shows the current indoor temperature and a digital clock, glowing with a soft white backlight.",
+    "instruction": "Navigate to the wall-mounted smart thermostat featuring a small circular display with a white backlight."
+  },
+  {
+    "id": 31,
+    "name": "table",
+    "position": [-5.50, 8.20, 0.75],
+    "room": 1,
+    "caption": "A height-adjustable craft table with a measuring grid printed on the surface. It has several small bins attached to the side for holding pens, brushes, and other artistic supplies.",
+    "instruction": "Go to the height-adjustable craft table that has a measuring grid on its surface and small storage bins on the side."
+  },
+  {
+    "id": 32,
+    "name": "chair",
+    "position": [8.20, -7.30, 0.40],
+    "room": 3,
+    "caption": "A modern stool with a bentwood seat and slim black metal legs. Its ergonomic shape provides comfort despite the lack of padding, fitting well into a contemporary bar area.",
+    "instruction": "Find the modern stool with a bentwood seat and slim black metal legs."
+  },
+  {
+    "id": 33,
+    "name": "cabinet",
+    "position": [-4.15, -2.50, 1.10],
+    "room": 2,
+    "caption": "A tall bookcase with six adjustable shelves. It is made of dark-stained oak and is currently filled with a diverse collection of hardback books and small decorative statues.",
+    "instruction": "Navigate to the tall dark-stained oak bookcase featuring six adjustable shelves."
+  },
+  {
+    "id": 34,
+    "name": "screen",
+    "position": [-1.10, 1.50, 1.30],
+    "room": 1,
+    "caption": "A digital signage display oriented vertically. It is currently showing a welcome message and a map of the building, with high-contrast text that is easy to read from a distance.",
+    "instruction": "Go to the vertical digital signage display showing a welcome message and building map."
+  },
+  {
+    "id": 35,
+    "name": "table",
+    "position": [-6.80, -9.10, 0.72],
+    "room": 2,
+    "caption": "A sturdy outdoor patio table made of weather-resistant synthetic wicker. It has a hole in the center for an umbrella and is surrounded by several matching wicker chairs.",
+    "instruction": "Find the synthetic wicker patio table featuring a central umbrella hole."
+  },
+  {
+    "id": 36,
+    "name": "chair",
+    "position": [2.15, -4.20, 0.48],
+    "room": 3,
+    "caption": "A bean bag chair covered in a soft grey microfiber material. Its informal shape conforms to the user's body, providing a cozy spot for reading or playing video games.",
+    "instruction": "Navigate to the cozy bean bag chair covered in soft grey microfiber material."
+  },
+  {
+    "id": 37,
+    "name": "cabinet",
+    "position": [-8.40, 3.45, 0.90],
+    "room": 1,
+    "caption": "A rolling tool cabinet with ten shallow drawers. It is made of heavy-duty red steel and has a keyed locking mechanism to keep expensive tools secure in the workshop.",
+    "instruction": "Find the heavy-duty red steel rolling tool cabinet with ten shallow drawers and a keyed locking mechanism."
+  },
+  {
+    "id": 38,
+    "name": "screen",
+    "position": [-2.15, -7.30, 1.10],
+    "room": 2,
+    "caption": "A small monitor used for home security surveillance. It displays a four-way split view of different camera angles around the property, with clear images even in low light.",
+    "instruction": "Go to the small home security monitor displaying a four-way split camera view."
+  },
+  {
+    "id": 39,
+    "name": "table",
+    "position": [-3.20, 5.60, 0.75],
+    "room": 1,
+    "caption": "A rustic console table made from a thick slab of natural wood with a live edge. It is supported by two heavy industrial-style metal legs and sits in the hallway.",
+    "instruction": "Navigate to the rustic hallway console table made from a thick natural wood slab with a live edge."
+  },
+  {
+    "id": 40,
+    "name": "chair",
+    "position": [-4.20, -8.50, 0.42],
+    "room": 2,
+    "caption": "A vintage rocking chair made of dark cherry wood. It has a tall spindle back and curved runners that allow for a gentle, rhythmic movement on the wooden floor.",
+    "instruction": "Find the vintage dark cherry wood rocking chair with a tall spindle back."
+  },
+  {
+    "id": 41,
+    "name": "cabinet",
+    "position": [9.10, -1.10, 0.85],
+    "room": 3,
+    "caption": "A corner display cabinet with integrated LED lighting and glass shelves. It is used to showcase a collection of fine china and trophies, glowing softly in the evening.",
+    "instruction": "Go to the corner display cabinet featuring glass shelves and integrated LED lighting."
+  },
+  {
+    "id": 42,
+    "name": "screen",
+    "position": [-0.50, -9.30, 1.25],
+    "room": 3,
+    "caption": "A built-in touchscreen panel for a smart home system. The sleek interface allows for control of lighting, music, and security throughout the house from this central hub location.",
+    "instruction": "Navigate to the built-in smart home touchscreen panel featuring a sleek control interface."
+  },
+  {
+    "id": 43,
+    "name": "table",
+    "position": [-8.20, -5.50, 0.75],
+    "room": 2,
+    "caption": "A drafting table with a large tilted surface. It is equipped with a parallel bar and a specialized lamp for architectural drawing and detailed engineering design work.",
+    "instruction": "Find the drafting table featuring a large tilted surface, parallel bar, and specialized lamp."
+  },
+  {
+    "id": 44,
+    "name": "chair",
+    "position": [7.30, -8.20, 0.40],
+    "room": 3,
+    "caption": "A designer lounge chair with an iconic molded plywood shell and black leather cushions. It is paired with a matching ottoman for ultimate comfort in the library area.",
+    "instruction": "Go to the iconic designer lounge chair made with a molded plywood shell and black leather cushions, paired with an ottoman."
+  },
+  {
+    "id": 45,
+    "name": "cabinet",
+    "position": [-2.50, -4.15, 1.10],
+    "room": 2,
+    "caption": "A wall-mounted TV console with a high-gloss black finish. It has several open compartments for media players and game consoles, keeping the cables neatly hidden from view.",
+    "instruction": "Navigate to the wall-mounted high-gloss black TV console featuring several open compartments."
+  },
+  {
+    "id": 46,
+    "name": "screen",
+    "position": [1.50, -1.10, 1.30],
+    "room": 3,
+    "caption": "An e-ink reader resting on a side table. The screen shows a page of text from a novel, and its glare-free surface looks exactly like printed paper under the sun.",
+    "instruction": "Find the e-ink reader with a glare-free surface resting on the side table."
+  },
+  {
+    "id": 47,
+    "name": "table",
+    "position": [-9.10, -6.80, 0.72],
+    "room": 2,
+    "caption": "A small vanity table with an attached oval mirror. It has two small drawers for jewelry and makeup, and is finished in a delicate antique white paint.",
+    "instruction": "Go to the small antique white vanity table with an attached oval mirror and two small drawers."
+  },
+  {
+    "id": 48,
+    "name": "chair",
+    "position": [-5.50, -8.50, 0.44],
+    "room": 2,
+    "caption": "A wicker porch chair with a thick floral-patterned cushion. It is designed for outdoor relaxation, providing a comfortable place to sit and enjoy the fresh air on the veranda.",
+    "instruction": "Navigate to the wicker porch chair featuring a thick floral-patterned cushion."
+  },
+  {
+    "id": 49,
+    "name": "cabinet",
+    "position": [-9.10, -9.10, 0.85],
+    "room": 2,
+    "caption": "A tall shoe rack cabinet with rotating internal shelves. It can hold up to thirty pairs of shoes behind its sleek mirrored front, saving space in the narrow hallway.",
+    "instruction": "Find the tall shoe rack cabinet with a sleek mirrored front and rotating internal shelves."
+  },
+  {
+    "id": 50,
+    "name": "screen",
+    "position": [8.50, -5.50, 1.30],
+    "room": 3,
+    "caption": "A portable projector screen standing on a tripod base. The large white surface is perfectly flat, ready to display high-definition movies or presentations in the dark room.",
+    "instruction": "Navigate to the portable projector screen standing on its tripod base."
+  }
+]

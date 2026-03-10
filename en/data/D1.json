@@ -1,0 +1,74 @@
+[
+  {
+    "id": -1,
+    "name": "Ego-Robot",
+    "position": [
+      5.0,
+      5.0,
+      1.0
+    ],
+    "room": 0,
+    "color": "red",
+    "caption": "The autonomous agent navigating the environment. It is currently positioned in the center of Room 0, equipped with a 360-degree LiDAR and panoramic vision system for real-time spatial reasoning."
+  },
+  {
+    "id": 1,
+    "name": "chair",
+    "position": [
+      6.5,
+      6.5,
+      2.2
+    ],
+    "room": 0,
+    "caption": "A sleek blue ergonomic chair with adjustable armrests and a breathable mesh back, perfect for long-duration office work sessions in a modern indoor environment.",
+    "instruction": "Navigate to the blue ergonomic chair that features a breathable mesh back and adjustable armrests."
+  },
+  {
+    "id": 2,
+    "name": "screen",
+    "position": [
+      6.2,
+      3.8,
+      1.8
+    ],
+    "room": 0,
+    "caption": "A high-definition purple curved monitor mounted on a swiveling metallic arm, displaying vibrant colors and providing a wide field of view for professional design.",
+    "instruction": "Find the high-definition purple curved monitor that is mounted on a swiveling metallic arm."
+  },
+  {
+    "id": 3,
+    "name": "table",
+    "position": [
+      6.8,
+      6.2,
+      0.4
+    ],
+    "room": 0,
+    "caption": "A sturdy green rectangular table with a smooth polished surface and reinforced legs, offering a stable platform for placing laptops and heavy office equipment.",
+    "instruction": "Go to the sturdy green rectangular table characterized by its smooth polished surface and reinforced legs."
+  },
+  {
+    "id": 4,
+    "name": "cabinet",
+    "position": [
+      5.8,
+      4.2,
+      0.2
+    ],
+    "room": 0,
+    "caption": "An orange wooden cabinet featuring two spacious drawers and sleek silver handles, providing organized storage for various files and essential office supplies.",
+    "instruction": "Navigate to the orange wooden cabinet that features two drawers and sleek silver handles."
+  },
+  {
+    "id": 5,
+    "name": "chair",
+    "position": [
+      3.5,
+      6.4,
+      2.5
+    ],
+    "room": 0,
+    "caption": "A premium blue velvet-covered chair with a tall backrest and chrome-finished base, combining luxury comfort with a stylish aesthetic for executive meeting rooms.",
+    "instruction": "Find the premium blue velvet-covered chair that has a tall backrest and a chrome-finished base."
+  }
+]

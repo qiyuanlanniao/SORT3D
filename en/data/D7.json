@@ -1,0 +1,194 @@
+[
+  {
+    "id": -1,
+    "name": "Ego-Robot",
+    "position": [
+      5.0,
+      5.0,
+      1.0
+    ],
+    "room": 0,
+    "color": "red",
+    "caption": "The autonomous agent navigating the environment. It is currently positioned in the center of Room 0, equipped with a 360-degree LiDAR and panoramic vision system for real-time spatial reasoning."
+  },
+  {
+    "id": 1,
+    "name": "chair",
+    "position": [
+      -4.25,
+      7.82,
+      0.51
+    ],
+    "room": 1,
+    "caption": "A modern ergonomic office chair upholstered in high-quality blue fabric, featuring a sleek black frame and rolling casters, positioned near the center of the workspace for maximum comfort.",
+    "instruction": "Navigate to the modern ergonomic office chair upholstered in blue fabric with a sleek black frame and rolling casters."
+  },
+  {
+    "id": 2,
+    "name": "table",
+    "position": [
+      -6.12,
+      3.45,
+      0.75
+    ],
+    "room": 1,
+    "caption": "This heavy wooden dining table has a polished surface with visible grain patterns. Its sturdy legs provide excellent stability, making it suitable for both dining and office related tasks.",
+    "instruction": "Go to the heavy wooden dining table featuring a polished surface with visible grain patterns and sturdy legs."
+  },
+  {
+    "id": 3,
+    "name": "cabinet",
+    "position": [
+      -8.91,
+      1.22,
+      1.10
+    ],
+    "room": 1,
+    "caption": "A tall storage cabinet made of light oak wood with two large doors and metallic handles. It offers ample space for organizing books and various office supplies within the room.",
+    "instruction": "Find the tall storage cabinet made of light oak wood equipped with two large doors and metallic handles."
+  },
+  {
+    "id": 4,
+    "name": "screen",
+    "position": [
+      -1.55,
+      8.90,
+      1.25
+    ],
+    "room": 1,
+    "caption": "An ultra-wide curved monitor with a glossy finish. It is mounted on a flexible arm stand, allowing for easy adjustment of height and tilt during intensive computer work sessions.",
+    "instruction": "Navigate to the ultra-wide curved monitor with a glossy finish that is mounted on a flexible arm stand."
+  },
+  {
+    "id": 5,
+    "name": "chair",
+    "position": [
+      -3.44,
+      2.11,
+      0.45
+    ],
+    "room": 1,
+    "caption": "A minimalist metal chair with a simple industrial design. The cold grey surface is durable and easy to clean, providing a functional seating option for a modern living space.",
+    "instruction": "Go to the minimalist metal industrial chair characterized by its cold grey surface and simple geometric frame."
+  },
+  {
+    "id": 6,
+    "name": "table",
+    "position": [
+      -7.33,
+      6.77,
+      0.82
+    ],
+    "room": 1,
+    "caption": "A small circular coffee table with a glass top and a chrome-finished base. Its transparent design adds a touch of elegance while keeping the visual space open and airy.",
+    "instruction": "Find the small circular coffee table featuring a transparent glass top and a chrome-finished base."
+  },
+  {
+    "id": 7,
+    "name": "cabinet",
+    "position": [
+      -2.10,
+      -5.44,
+      0.95
+    ],
+    "room": 2,
+    "caption": "A low-profile media cabinet designed for home entertainment systems. It features multiple open shelves for electronic devices and a hidden compartment for cable management and storage.",
+    "instruction": "Navigate to the low-profile media cabinet featuring multiple open shelves and a hidden cable management compartment."
+  },
+  {
+    "id": 8,
+    "name": "screen",
+    "position": [
+      -6.78,
+      -8.12,
+      1.45
+    ],
+    "room": 2,
+    "caption": "A flat-screen television with thin bezels and a high-definition display. It is currently powered off, showing a deep black reflection of the surrounding room environment on its surface.",
+    "instruction": "Go to the flat-screen television with thin bezels that is currently powered off and showing a black reflective surface."
+  },
+  {
+    "id": 9,
+    "name": "chair",
+    "position": [
+      -8.45,
+      -2.33,
+      0.55
+    ],
+    "room": 2,
+    "caption": "A soft armchair covered in velvet, offering a cozy spot for reading. The deep cushions and high backrest provide great support, perfect for long periods of relaxation.",
+    "instruction": "Find the soft armchair upholstered in velvet material, featuring deep cushions and a high backrest."
+  },
+  {
+    "id": 10,
+    "name": "table",
+    "position": [
+      -4.50,
+      -4.50,
+      0.78
+    ],
+    "room": 2,
+    "caption": "A rustic wooden breakfast table with a distressed finish. The reclaimed timber gives it a unique character, with natural cracks and knots adding to its vintage farmhouse aesthetic.",
+    "instruction": "Navigate to the rustic wooden table made of reclaimed timber with a distressed finish containing natural cracks and knots."
+  },
+  {
+    "id": 11,
+    "name": "cabinet",
+    "position": [
+      -3.88,
+      -7.22,
+      1.30
+    ],
+    "room": 2,
+    "caption": "A vintage filing cabinet with four deep drawers, made of dark green steel. The labels on the front suggest it was previously used for professional document organization and archives.",
+    "instruction": "Go to the vintage dark green steel filing cabinet consisting of four deep drawers."
+  },
+  {
+    "id": 12,
+    "name": "screen",
+    "position": [
+      -9.20,
+      -9.10,
+      1.60
+    ],
+    "room": 2,
+    "caption": "A secondary display screen with a matte finish to reduce glare. It is positioned horizontally, likely used as an auxiliary output for data monitoring or creative digital work.",
+    "instruction": "Find the horizontal secondary display screen featuring a glare-reducing matte finish."
+  },
+  {
+    "id": 13,
+    "name": "chair",
+    "position": [
+      2.45,
+      -6.78,
+      0.48
+    ],
+    "room": 3,
+    "caption": "A stylish plastic shell chair with wooden legs, often used in contemporary dining rooms. Its light weight and stackable design make it a versatile choice for dynamic interiors.",
+    "instruction": "Navigate to the stylish plastic shell chair supported by four wooden legs."
+  },
+  {
+    "id": 14,
+    "name": "table",
+    "position": [
+      7.88,
+      -2.12,
+      0.85
+    ],
+    "room": 3,
+    "caption": "An adjustable-height standing desk with a white laminate top. The electric motor allows the user to transition smoothly between sitting and standing positions throughout the long day.",
+    "instruction": "Go to the adjustable-height standing desk featuring a white laminate top and an integrated electric motor."
+  },
+  {
+    "id": 15,
+    "name": "cabinet",
+    "position": [
+      5.60,
+      -8.33,
+      1.05
+    ],
+    "room": 3,
+    "caption": "A compact bedside cabinet with a single drawer and a lower shelf. It is made of pine wood and serves as a convenient platform for a lamp or books.",
+    "instruction": "Find the compact pine wood bedside cabinet equipped with a single drawer and a lower open shelf."
+  }
+]

@@ -1,0 +1,194 @@
+[
+  {
+    "id": -1,
+    "name": "Ego-Robot",
+    "position": [
+      5.0,
+      5.0,
+      1.0
+    ],
+    "room": 0,
+    "color": "red",
+    "caption": "The autonomous agent navigating the environment. It is currently positioned in the center of Room 0, equipped with a 360-degree LiDAR and panoramic vision system for real-time spatial reasoning."
+  },
+  {
+    "id": 1,
+    "name": "chair",
+    "position": [
+      6.2,
+      7.1,
+      1.8
+    ],
+    "room": 0,
+    "caption": "This blue ergonomic office chair features a high backrest and mesh fabric. It is designed for long-term comfort, having adjustable armrests and a sturdy rotating base with five smooth rollers on the floor.",
+    "instruction": "Navigate to the blue ergonomic office chair featuring a high backrest, mesh fabric, and a sturdy rotating base with five rollers on the floor."
+  },
+  {
+    "id": 2,
+    "name": "screen",
+    "position": [
+      5.8,
+      6.5,
+      2.1
+    ],
+    "room": 0,
+    "caption": "A purple slim-bezel screen sits atop a desk mount. The display has a matte finish to reduce glare and shows a high-resolution interface, serving as a primary workspace visual output device.",
+    "instruction": "Find the purple slim-bezel screen with a matte finish that is mounted on a desk workspace."
+  },
+  {
+    "id": 3,
+    "name": "table",
+    "position": [
+      7.5,
+      3.2,
+      1.5
+    ],
+    "room": 0,
+    "caption": "This green rectangular wooden table has a polished surface and thick square legs. It provides ample space for office supplies and is positioned conveniently for multiple people to collaborate around its wide top.",
+    "instruction": "Go to the green rectangular wooden table with a polished surface and thick square legs, designed for multiple collaborators."
+  },
+  {
+    "id": 4,
+    "name": "cabinet",
+    "position": [
+      5.5,
+      2.1,
+      1.9
+    ],
+    "room": 0,
+    "caption": "An orange metallic storage cabinet with two locked doors. It is used for organizing sensitive documents and equipment, featuring a flat top surface where additional lightweight peripheral devices are currently placed.",
+    "instruction": "Navigate to the orange metallic storage cabinet that has two locked doors and lightweight peripheral devices placed on its top surface."
+  },
+  {
+    "id": 5,
+    "name": "chair",
+    "position": [
+      6.8,
+      5.5,
+      0.4
+    ],
+    "room": 0,
+    "caption": "A small blue chair located under the table height. It has a circular seat covered in velvet material, providing a compact seating option that can be easily tucked away when not in use.",
+    "instruction": "Find the small blue chair with a circular velvet seat that is positioned low and tucked under the table height."
+  },
+  {
+    "id": 6,
+    "name": "cabinet",
+    "position": [
+      5.2,
+      7.8,
+      0.2
+    ],
+    "room": 0,
+    "caption": "A low-profile orange filing cabinet made of light wood. It contains three sliding drawers with metallic handles, sitting directly on the carpeted floor to provide easy access to frequently used office stationery.",
+    "instruction": "Go to the low-profile orange filing cabinet made of light wood with three sliding drawers and metallic handles sitting on the carpeted floor."
+  },
+  {
+    "id": 7,
+    "name": "table",
+    "position": [
+      7.1,
+      4.2,
+      0.3
+    ],
+    "room": 0,
+    "caption": "A green low coffee table with a glass insert. The minimalist metal frame supports a transparent top, making the room feel more spacious while offering a stable place for magazines or beverages.",
+    "instruction": "Find the green low coffee table with a minimalist metal frame and a transparent top featuring a glass insert."
+  },
+  {
+    "id": 8,
+    "name": "screen",
+    "position": [
+      6.0,
+      2.8,
+      0.5
+    ],
+    "room": 0,
+    "caption": "A purple screen lying flat on a low surface. The screen is currently active, displaying a digital map for navigation, and its compact size affords portability within the indoor office environment.",
+    "instruction": "Navigate to the purple screen with an active digital map display that is lying flat on a low surface."
+  },
+  {
+    "id": 9,
+    "name": "chair",
+    "position": [
+      3.2,
+      6.2,
+      1.6
+    ],
+    "room": 0,
+    "caption": "A blue modern lounge chair with a deep seat and curved armrests. It is upholstered in a durable synthetic fabric, offering a relaxed seating position for breaks within the high-density workspace.",
+    "instruction": "Go to the blue modern lounge chair with a deep seat and curved armrests, upholstered in durable synthetic fabric for break areas."
+  },
+  {
+    "id": 10,
+    "name": "screen",
+    "position": [
+      4.5,
+      7.1,
+      2.5
+    ],
+    "room": 0,
+    "caption": "A purple screen with a glowing LED display. It is mounted high on the partition wall, providing highly visible time information to everyone in the room from a distance.",
+    "instruction": "Find the purple screen with a glowing LED display mounted high on the partition wall."
+  },
+  {
+    "id": 11,
+    "name": "table",
+    "position": [
+      2.5,
+      4.5,
+      1.7
+    ],
+    "room": 0,
+    "caption": "A small green side table with a triangular top. This lightweight piece of furniture is made of recycled plastic and is used to hold a small potted plant near the corner window.",
+    "instruction": "Navigate to the small green side table with a triangular top made of recycled plastic that currently holds a potted plant."
+  },
+  {
+    "id": 12,
+    "name": "cabinet",
+    "position": [
+      3.8,
+      2.9,
+      1.4
+    ],
+    "room": 0,
+    "caption": "An orange wall-mounted cabinet with glass doors. It reveals several internal shelves used for displaying decorative items or awards, keeping them safe from dust while remaining visible to visitors.",
+    "instruction": "Go to the orange wall-mounted cabinet with glass doors and internal shelves used for displaying decorative items."
+  },
+  {
+    "id": 13,
+    "name": "chair",
+    "position": [
+      4.2,
+      4.2,
+      0.6
+    ],
+    "room": 0,
+    "caption": "A blue folding chair leaning against the wall. It features a simple metal frame and a plastic seat, used as an extra seating option during large meetings or social gatherings in the room.",
+    "instruction": "Find the blue folding chair with a simple metal frame and plastic seat that is currently leaning against the wall."
+  },
+  {
+    "id": 14,
+    "name": "screen",
+    "position": [
+      2.1,
+      7.5,
+      0.3
+    ],
+    "room": 0,
+    "caption": "A purple electronic screen stand located near the floor. It has a large interactive touch display used for presentations, mounted on a mobile frame with lockable wheels for easy repositioning.",
+    "instruction": "Navigate to the purple electronic screen stand featuring a large interactive touch display and a mobile frame with lockable wheels."
+  },
+  {
+    "id": 15,
+    "name": "table",
+    "position": [
+      3.5,
+      3.5,
+      0.4
+    ],
+    "room": 0,
+    "caption": "A green heavy-duty table sitting on the floor. It has a reinforced steel frame and a thick rubber-top surface, providing a stable area for assembling hardware components and testing robots.",
+    "instruction": "Go to the green heavy-duty table on the floor that features a reinforced steel frame and a thick rubber-top surface for robot testing."
+  }
+]

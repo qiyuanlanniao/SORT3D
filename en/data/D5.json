@@ -1,0 +1,134 @@
+[
+  {
+    "id": -1,
+    "name": "Ego-Robot",
+    "position": [
+      5.0,
+      5.0,
+      1.0
+    ],
+    "room": 0,
+    "color": "red",
+    "caption": "The autonomous agent navigating the environment. It is currently positioned in the center of Room 0, equipped with a 360-degree LiDAR and panoramic vision system for real-time spatial reasoning."
+  },
+  {
+    "id": 1,
+    "name": "chair",
+    "position": [
+      1.2,
+      0.8,
+      0.45
+    ],
+    "room": 0,
+    "caption": "A sleek blue ergonomic chair with a high backrest and mesh fabric. It is tucked into the far corner of the room, featuring silver adjustable armrests and a five-star nylon base with smooth rollers.",
+    "instruction": "Navigate to the sleek blue ergonomic chair in the far corner that features a high backrest, mesh fabric, and silver adjustable armrests."
+  },
+  {
+    "id": 2,
+    "name": "table",
+    "position": [
+      8.7,
+      9.1,
+      0.75
+    ],
+    "room": 0,
+    "caption": "A heavy green wooden table with a polished surface. It is situated in the upper right corner, supported by four thick solid legs, providing a stable platform for heavy laboratory equipment or monitors.",
+    "instruction": "Go to the heavy green wooden table located in the upper right corner, characterized by its polished surface and four thick solid legs."
+  },
+  {
+    "id": 3,
+    "name": "cabinet",
+    "position": [
+      0.5,
+      8.9,
+      1.1
+    ],
+    "room": 0,
+    "caption": "A tall orange storage cabinet made of industrial-grade steel. It features three lockable drawers and a matte finish, standing against the left wall to maximize the central workspace area for the robot.",
+    "instruction": "Find the tall orange industrial-grade steel cabinet standing against the left wall that features a matte finish and three lockable drawers."
+  },
+  {
+    "id": 4,
+    "name": "screen",
+    "position": [
+      9.3,
+      1.1,
+      1.5
+    ],
+    "room": 0,
+    "caption": "A large purple screen mounted on a black swivel stand. The glossy screen surface reflects the room's lighting, currently positioned in the bottom right corner for peripheral status monitoring.",
+    "instruction": "Navigate to the large purple screen in the bottom right corner, mounted on a black swivel stand and featuring a glossy screen surface."
+  },
+  {
+    "id": 5,
+    "name": "chair",
+    "position": [
+      1.8,
+      1.9,
+      0.45
+    ],
+    "room": 0,
+    "caption": "A low-profile blue swivel chair without armrests. Its compact design allows it to fit into tight spaces, featuring a breathable fabric seat and a single central support pillar with manual height adjustment.",
+    "instruction": "Go to the compact, low-profile blue swivel chair that has no armrests and is supported by a single central pillar."
+  },
+  {
+    "id": 6,
+    "name": "table",
+    "position": [
+      0.4,
+      0.3,
+      0.75
+    ],
+    "room": 0,
+    "caption": "A small square green side table located near the entrance corner. Its minimalist design includes a thin metal frame and a durable plastic top, suitable for holding minor peripheral devices or sensors.",
+    "instruction": "Navigate to the small square green side table near the entrance corner, featuring a minimalist thin metal frame and a plastic top."
+  },
+  {
+    "id": 7,
+    "name": "cabinet",
+    "position": [
+      8.2,
+      0.6,
+      0.9
+    ],
+    "room": 0,
+    "caption": "A mid-sized orange filing cabinet with a textured metallic exterior. It is placed adjacent to the right wall, containing several horizontal dividers for organizing documents and spare mechanical components.",
+    "instruction": "Find the mid-sized orange filing cabinet with a textured metallic exterior and horizontal dividers, positioned adjacent to the right wall."
+  },
+  {
+    "id": 8,
+    "name": "screen",
+    "position": [
+      1.1,
+      9.5,
+      1.6
+    ],
+    "room": 0,
+    "caption": "A wide purple ultrawide screen oriented towards the room center. It features a thin bezel design and is currently displaying a complex data visualization, aiding in remote teleoperation tasks.",
+    "instruction": "Navigate to the purple ultrawide screen that features a thin bezel and is oriented towards the center of the room."
+  },
+  {
+    "id": 9,
+    "name": "chair",
+    "position": [
+      9.6,
+      8.5,
+      0.45
+    ],
+    "room": 0,
+    "caption": "A blue folding chair with a reinforced aluminum frame. It is temporarily stored in the upper right corner, featuring a high-density foam cushion and a lightweight structure for easy relocation.",
+    "instruction": "Go to the lightweight blue folding chair stored in the upper right corner, featuring a reinforced aluminum frame and a high-density foam cushion."
+  },
+  {
+    "id": 10,
+    "name": "cabinet",
+    "position": [
+      8.8,
+      8.2,
+      1.2
+    ],
+    "room": 0,
+    "caption": "An orange overhead cabinet mounted near the ceiling corner. It provides additional vertical storage space, constructed from lightweight composite materials with a sliding door mechanism for easy access.",
+    "instruction": "Navigate to the orange overhead cabinet mounted near the ceiling corner that features a sliding door mechanism."
+  }
+]

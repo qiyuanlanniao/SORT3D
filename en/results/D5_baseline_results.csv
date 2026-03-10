@@ -1,0 +1,11 @@
+target_id,input_tokens,output_tokens,latency,success,pred_id,answer
+1,810,6,0.37,1,1,go_near(1)
+2,807,6,0.2,1,2,go_near(2)
+3,806,6,0.21,1,3,go_near(3)
+4,808,6,0.21,1,4,go_near(4)
+5,808,6,0.21,1,5,go_near(5)
+6,806,6,0.21,1,6,go_near(6)
+7,806,6,0.21,1,7,go_near(7)
+8,806,6,0.21,1,8,go_near(8)
+9,808,6,0.21,1,9,go_near(9)
+10,800,7,0.23,1,10,go_near(10)
