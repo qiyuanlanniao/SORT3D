@@ -1,0 +1,8 @@
+===============
+INPUT STATEMENT
+===============
+go to the first screen behind you
+===============
+OUTPUT CODE
+===============
+Error: Error response 429 while fetching https://api.mistral.ai/v1/chat/completions: {"object":"error","message":"Rate limit exceeded","type":"rate_limited","param":null,"code":"1300","raw_status_code":429}

@@ -191,13 +191,13 @@ class CaptioningNode(Node):
 
     def handle_verify_request(self, request, response):
         if self.latest_full_image_cv is None:
-            self.get_logger().error("❌ [VLM Service] 失败：当前没有可用的全景图像")
+            self.get_logger().error("❌ [VLM Service] Failure: No panoramic image is currently available.")
             response.success = False
             return response
 
         try:
             name_a, name_b = request.message.split(',')
-            self.get_logger().info(f"📩 [VLM Service] 收到请求：验证 {name_a} 和 {name_b} 的关系")
+            self.get_logger().info(f"📩 [VLM Service] Request received: Verify the relationship between {name_a} and {name_b}")
             
             # 调用 VLM
             is_valid = self.captioner.verify_node_relationship(
@@ -207,14 +207,14 @@ class CaptioningNode(Node):
             )
             
             # 记录结果
-            status = "YES (建立连接)" if is_valid else "NO (断开连接)"
-            self.get_logger().info(f"🤖 [VLM Result] 模型判定结果: {status}")
+            status = "YES (Establish connection)" if is_valid else "NO (Disconnected)"
+            self.get_logger().info(f"🤖 [VLM Result] Model determination result: {status}")
             
             response.success = is_valid
             response.message = f"VLM marked as {status}"
             
         except Exception as e:
-            self.get_logger().error(f"💥 [VLM Service] 运行崩溃: {str(e)}")
+            self.get_logger().error(f"💥 [VLM Service] Runtime crash: {str(e)}")
             response.success = True # 报错时默认不剪枝，防止误删
             
         return response

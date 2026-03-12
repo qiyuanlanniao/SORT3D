@@ -523,7 +523,6 @@ class Captioner:
         # if self.load_captioner and self.caption_generation_option == CaptionGenerationOptions.ON_QUERY:
         #     self.generate_captions(self.semantic_dict) #! 对所有正在维护的物体补全标题，不涉及query本身
         if self.load_captioner:
-            self.log_info("DEBUG >>> 正在为所有物体生成描述，请稍候...")
             self.generate_captions(self.semantic_dict)
         
         if "GET_ALL" in query_list:

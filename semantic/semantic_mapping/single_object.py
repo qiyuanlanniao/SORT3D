@@ -378,7 +378,6 @@ class SingleObject:
                     continue
 
                 if dim[0] > dim_prior[0] or dim[1] > dim_prior[1] or dim[2] > dim_prior[2]:
-                    self.log_info(f"DEBUG >>> 物体 {self.get_dominant_label()} 尺寸超标: {dim}, 阈值: {dim_prior}")
                     continue
                 valid_cluster_mask = np.logical_or(valid_cluster_mask, mask)
 

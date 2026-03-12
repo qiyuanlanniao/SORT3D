@@ -178,7 +178,7 @@ class MappingNode(Node):
             z_offset=z_off
         )
 
-        print(f"DEBUG >>> 最终生效参数: FOV={fov_up}, Z_Offset={z_off}, Yaw_Offset={yaw_off}")
+        print(f"FOV={fov_up}, Z_Offset={z_off}, Yaw_Offset={yaw_off}")
 
         self.obj_mapper = ObjMapper(tracker=tracker, 
                                     cloud_image_fusion=self.cloud_img_fusion, 
@@ -463,9 +463,9 @@ class MappingNode(Node):
         try:
             queried_caption_str = json.dumps(self.queried_captions, cls=NumpyEncoder)
             self.caption_pub.publish(String(data=queried_caption_str))
-            self.log_info("★★★ 描述生成完毕，已立即主动发布到 /queried_captions")
+            self.log_info("★★★ Description has been published to /queried_captions")
         except Exception as e:
-            self.get_logger().error(f"立即发布失败: {e}")
+            self.get_logger().error(f"Immediate release failed: {e}")
 
         self.log_info(f'{self.queried_captions}')
 
@@ -836,7 +836,6 @@ class MappingNode(Node):
     def generate_freespace(self, msg: PointCloud2):
         # 只有当机器狗移动超过阈值（如 0.05米）时，才更新和保存地图
         if self.cur_pos_for_freespace is None or np.linalg.norm(self.cur_pos[:2] - self.cur_pos_for_freespace[:2]) > self.pos_change_threshold:
-            self.get_logger().info("DEBUG >>> 正在更新并保存地图数据 (地面+障碍物)...") 
 
             # 1. 解析当前帧点云
             full_pcd_np = point_cloud2.read_points_numpy(msg, field_names=("x", "y", "z"))
@@ -887,9 +886,9 @@ class MappingNode(Node):
                 m_path = os.path.join(save_dir, "map_pcl.ply")
                 o3d.io.write_point_cloud(m_path, m_pcd)
                 
-                self.get_logger().info(f"成功更新地图文件: {f_path} 和 {m_path}")
+                self.get_logger().info(f"Map files updated successfully: {f_path} and {m_path}")
             except Exception as e:
-                self.get_logger().error(f"保存地图过程中出现异常: {e}")
+                self.get_logger().error(f"An error occurred during map saving: {e}")
 
             # 更新当前位置记录
             self.cur_pos_for_freespace = self.cur_pos.copy()

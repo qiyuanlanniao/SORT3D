@@ -160,7 +160,7 @@ class TopologyManager(Node):
         """
         第三步：导出 Room -> Group -> Object 的三级深度语义树
         """
-        lines = ["=== Hierarchical Scene Graph (H-CoT Format) ==="]
+        lines = ["=== Hierarchical Scene Graph ==="]
         room_nodes = [n for n, d in self.graph.nodes(data=True) if d.get('type') == 'room']
         
         for r_id in sorted(room_nodes):
@@ -356,7 +356,7 @@ class TopologyManager(Node):
                 
                 if loop_node_id:
                     # 发现回环！不生成新节点，直接建立连接
-                    self.get_logger().info(f"🔄 [Loop Closure] 检测到回环！连接当前路径到旧节点 {loop_node_id}")
+                    self.get_logger().info(f"🔄 [Loop Closure] Loopback detected! Connect the current path to the old node {loop_node_id}.")
                     
                     if self.node_count > 0:
                         prev_id = f"p_{self.node_count-1}"
@@ -380,10 +380,10 @@ class TopologyManager(Node):
                     self.link_objects_to_place(new_place_id, gvd_pos, dist)
                     self.node_count += 1
                     self.last_pos = gvd_pos
-                    self.get_logger().info(f"📍 生成 Place {new_place_id}")
+                    self.get_logger().info(f"📍 Generate Place {new_place_id}")
                     
         except Exception as e:
-            self.get_logger().error(f"处理失败: {e}")
+            self.get_logger().error(f"Processing failed: {e}")
 
     def find_loop_closure(self, curr_pos):
         """
@@ -559,10 +559,9 @@ class TopologyManager(Node):
             pose_path = "/home/iot/hm/ros2_ws/maps/last_robot_pose.json"
             with open(pose_path, "w") as f:
                 json.dump({"position": self.last_pos.tolist(), "orientation": self.cur_orient_quat}, f)
-        self.get_logger().info(f"💾 机器人位姿已固化至 {pose_path}")
         with open(save_path, "w") as f:
             f.write(full_scene_report)
-        self.get_logger().info(f"✅ [[DSG Export] 层级与连通性已打包发送并保存")
+        self.get_logger().info(f"✅ [[DSG Export] The hierarchy and connectivity have been packaged, sent, and saved.")
 
     def clear_hierarchical_edges(self):
         # 1. 清理边
@@ -885,21 +884,20 @@ class TopologyManager(Node):
             
             if dist < 1.0 and label_u != label_v:
                 # 打印：正在发起验证
-                self.get_logger().info(f"🔍 [VLM Check] 正在验证短程边: {label_u} <-> {label_v} (距离: {dist:.2f}m)")
+                self.get_logger().info(f"🔍 [VLM Check] Validating short-range edges: {label_u} <-> {label_v} (distance: {dist:.2f}m)")
                 
                 is_valid = self.call_vlm_verification_service(label_u, label_v)
                 
                 if not is_valid:
                     edges_to_remove.append((u, v))
                     # 打印：剪枝成功
-                    self.get_logger().warn(f"✂️ [VLM Pruned] 视觉逻辑不通过，已标记删除: {label_u} <-> {label_v}")
+                    self.get_logger().warn(f"✂️ [VLM Pruned] Visual logic failed: {label_u} <-> {label_v}")
                 else:
                     # 打印：保留边
-                    self.get_logger().info(f"✅ [VLM Kept] 视觉逻辑通过，保留连接: {label_u} <-> {label_v}")
+                    self.get_logger().info(f"✅ [VLM Kept] Visual logic passed: {label_u} <-> {label_v}")
 
         if edges_to_remove:
             self.graph.remove_edges_from(edges_to_remove)
-            self.get_logger().info(f"✨ [Pruning Summary] 本轮共通过 VLM 剪除 {len(edges_to_remove)} 条边")
 
     def call_vlm_verification_service(self, name_a, name_b):
         """
@@ -924,7 +922,6 @@ class TopologyManager(Node):
         start_time = time.time()
         while not future.done():
             if time.time() - start_time > 10.0: # 10秒超时保护
-                self.get_logger().warn("VLM 验证超时，默认保留连接")
                 return True
             time.sleep(0.1) # 轮询间隔
 

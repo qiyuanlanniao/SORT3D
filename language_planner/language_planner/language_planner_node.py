@@ -152,8 +152,6 @@ class LanguagePlanner(Node):
         pos = info['centroid']
         
         # --- 1. 检索图片文件 ---
-        import os
-        import glob
         try:
             # 找到最新的日期文件夹 (2026-02-28_...)
             date_folders = sorted(glob.glob(os.path.join(self.crops_base_path, "*")))
@@ -169,9 +167,9 @@ class LanguagePlanner(Node):
                     cv_img = cv2.imread(crop_path)
                     ros_img = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")
                     self.target_image_pub.publish(ros_img)
-                    self.log_info(f"🖼️ [Visuals] 已发布目标 {target_id} 的抠图: {crop_path}")
+                    self.log_info(f"🖼️ The cropping for target {target_id} has been published: {crop_path}")
         except Exception as e:
-            self.get_logger().error(f"提取目标图片失败: {e}")
+            self.get_logger().error(f"Failed to extract target image: {e}")
 
         # --- 2. 发布巨大的绿色向下箭头 ---
         now = self.get_clock().now().to_msg()
@@ -216,8 +214,6 @@ class LanguagePlanner(Node):
         # 3. 同时也清空内存中的历史记录
         self.path_history = empty_path
         
-        self.get_logger().info("🧹 [Cleanup] 已清理 RViz 中的历史路径轨迹")
-        
         # 4. 销毁这个定时器，确保它只在启动时运行一次
         self.clear_timer.cancel()
 
@@ -235,7 +231,7 @@ class LanguagePlanner(Node):
         # 到达判定
         if dist < 0.2:
             self.is_simulating_movement = False
-            self.get_logger().info("🏁 [Simulator] 已到达目标点，停止模拟")
+            self.get_logger().info("🏁 Target point reached")
             return
 
         # 2. 更新内存中的坐标和朝向
@@ -283,7 +279,7 @@ class LanguagePlanner(Node):
         self.path_pub.publish(self.path_history)
         
         # 6. 打印移动状态
-        self.get_logger().info(f"🏃 [Sim] 正在移动... 距离剩余: {dist:.2f}m", throttle_duration_sec=1.0)
+        self.get_logger().info(f"🏃 Moving... Distance remaining: {dist:.2f}m", throttle_duration_sec=1.0)
 
     def record_path_history(self, current_pose_msg):
         """记录并发布行走路径"""
@@ -514,7 +510,7 @@ class LanguagePlanner(Node):
             self.sim_target_pos = np.array([target_xy[0], target_xy[1], self.cur_pos[2]])
             self.is_simulating_movement = True
             
-            self.get_logger().info(f"🚀 [Sim] 目标坐标: {waypoint.round(2)} | 模拟行走至: {target_xy.round(2)}")
+            self.get_logger().info(f"🚀 Target coordinates: {waypoint.round(2)} | Walk to: {target_xy.round(2)}")
 
             while self.is_simulating_movement and rclpy.ok():
                 self.publish_waypoint(target_xy)
@@ -523,7 +519,7 @@ class LanguagePlanner(Node):
                 for obj_id in id_sublist:
                     if obj_id in self.object_dict:
                         if self.object_dict[obj_id]['relative_dist'] < self.focal_dist_threshold:
-                            self.get_logger().info(f"👀 [Sim] 接近目标 {obj_id}，准备精细推理")
+                            self.get_logger().info(f"👀 Approaching the target {obj_id}, prepare for detailed reasoning.")
                             self.is_simulating_movement = False
                             break
                 time.sleep(0.1)
@@ -543,8 +539,13 @@ class LanguagePlanner(Node):
             f.write(output_code)
 
 
-    def handle_language_query(self, msg: String):
+    def handle_language_query(self, msg: String, is_retry=False):
         self.log_info(f'Query received: {msg.data}')
+        if not is_retry:
+            self.path_history.poses = [] # 清空内存中的点
+            self.path_pub.publish(self.path_history) # 发布空路径让 RViz 擦除线条
+            # 可选：如果你想让之前的绿色箭头也消失，可以调用 self.clear_object_markers()
+            self.clear_object_markers()
 
         # 定义统一的地图存放目录
         maps_dir = os.path.join(os.path.expanduser("~"), "hm/ros2_ws/maps")
@@ -553,42 +554,42 @@ class LanguagePlanner(Node):
         if self.freespace_pcl is None:
             map_path = os.path.join(maps_dir, "freespace_map.ply")
             if os.path.exists(map_path):
-                self.log_info(f"📂 [Offline Mode] 正在加载可通行地图: {map_path}")
+                self.log_info(f"📂 Loading passable map: {map_path}")
                 try:
                     pcd = o3d.io.read_point_cloud(map_path)
                     self.freespace_pcl = np.asarray(pcd.points)
                 except Exception as e:
-                    self.log_info(f"❌ 加载可通行地图失败: {e}")
+                    self.log_info(f"❌ Failed to load passable map: {e}")
             else:
-                self.log_info(f"⚠️ 话题无数据且在 {map_path} 找不到文件")
+                self.log_info(f"⚠️ The topic has no data and the file cannot be found in {map_path}.")
                 return
 
         # 2. 检查并加载【障碍物地图】 (Obstacles)
         if self.map_pcl is None:
             obs_path = os.path.join(maps_dir, "map_pcl.ply") # 统一命名为 map_pcl.ply
             if os.path.exists(obs_path):
-                self.log_info(f"📂 [Offline Mode] 正在加载障碍物地图: {obs_path}")
+                self.log_info(f"📂 Loading obstacle map: {obs_path}")
                 try:
                     pcd_obs = o3d.io.read_point_cloud(obs_path)
                     self.map_pcl = np.asarray(pcd_obs.points)
                 except Exception as e:
-                    self.log_info(f"❌ 加载障碍物地图失败: {e}")
+                    self.log_info(f"❌ Failed to load obstacle map: {e}")
             else:
-                self.log_info(f"⚠️ 话题无数据且在 {obs_path} 找不到文件")
+                self.log_info(f"⚠️ The topic has no data and the file cannot be found in {obs_path}.")
                 # 提示：即使没有障碍物地图，有些规划器也能跑，但建议保留
 
         # 3. 检查并加载【DSG层级结构描述】 (Scene Hierarchy)
         if not self.latest_hierarchy: # 检查字符串是否为空
             hierarchy_path = os.path.join(maps_dir, "latest_scene_graph.txt")
             if os.path.exists(hierarchy_path):
-                self.log_info(f"📂 [Offline Mode] 正在加载层级结构文件: {hierarchy_path}")
+                self.log_info(f"📂 Loading hierarchy file: {hierarchy_path}")
                 try:
                     with open(hierarchy_path, "r") as f:
                         self.latest_hierarchy = f.read()
                 except Exception as e:
-                    self.log_info(f"❌ 加载层级文件失败: {e}")
+                    self.log_info(f"❌ Failed to load hierarchical files: {e}")
             else:
-                self.log_info(f"❌ 严重错误：找不到层级描述文件 {hierarchy_path}，LLM 将失去上下文！")
+                self.log_info(f"❌ Critical error: Hierarchy description file {hierarchy_path} not found. The LLM will lose its context!")
                 return
             pose_path = os.path.join(maps_dir, "last_robot_pose.json")
             if os.path.exists(pose_path):
@@ -596,7 +597,7 @@ class LanguagePlanner(Node):
                     pose_data = json.load(f)
                     self.cur_pos = np.array(pose_data["position"])
                     self.cur_orient = np.array(pose_data["orientation"])
-                self.log_info(f"📍 [Offline] 机器人初始位置已恢复: {self.cur_pos}")
+                self.log_info(f"📍 The robot's initial position has been restored: {self.cur_pos}")
         
         input_statement = msg.data
 
@@ -671,7 +672,7 @@ class LanguagePlanner(Node):
                 current_room_id = info['parent_room_id']
         
         self.robot_current_room = current_room_id
-        self.log_info(f"📍 预计算完成：机器人当前位于 {current_room_id}")
+        self.log_info(f"📍 Pre-calculation complete: The robot is currently located at {current_room_id}")
 
         # --- 6. 多分辨率裁剪 (利用前面存好的 local_pos) ---
         processed_dict_for_backend = {}
@@ -726,9 +727,6 @@ class LanguagePlanner(Node):
             memory_lines.append(f"Room {rid} (Distant) contains: {summary}")
         global_memory_desc = "\n".join(memory_lines) if memory_lines else "(No other rooms detected)"
 
-        # 打印调试信息
-        self.get_logger().info(f"📊 [Token Opt] 焦点物体: {len(local_room_objs)} | 外围物体: {len(peripheral_desc_lines)}")
-
         # --- 8. 正式调用后端生成 Plan ---
         self.target_waypoints, self.target_ids, filtered_objects_out, output_code = self.language_planner_backend.generate_plan(
             self.environment_name,
@@ -762,13 +760,13 @@ class LanguagePlanner(Node):
                     target_reached_focal = True
         
         if not target_reached_focal and rclpy.ok():
-            self.get_logger().info("🔄 [Re-perception] 目标尚远，正在靠近并准备下一轮精化推理...")
+            self.get_logger().info("🔄 [Re-perception]")
             # 延时一段时间，让机器狗多走一段距离
             time.sleep(2.0) 
             new_msg = String(data=input_statement)
-            self.handle_language_query(new_msg)
+            self.handle_language_query(new_msg, is_retry=True)
         else:
-            self.get_logger().info("🏁 任务完成：目标已在视野内并成功到达。")
+            self.get_logger().info("🏁 Mission accomplished: The target is now in sight and has been successfully reached.")
 
     def save_scene_objects_json(self, object_dict):
         """
@@ -808,9 +806,9 @@ class LanguagePlanner(Node):
         try:
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(all_objects_data, f, indent=4, ensure_ascii=False)
-            self.log_info(f"✅ [Full Export] 包含机器狗在内的 {len(all_objects_data)} 个物体已保存至: {json_path}")
+            self.log_info(f"✅ {len(all_objects_data)} objects, including the robot dog, have been saved to: {json_path}")
         except Exception as e:
-            self.log_info(f"❌ 导出 JSON 失败: {e}")
+            self.log_info(f"❌ Exporting JSON failed: {e}")
 
         
 def main():

@@ -1,0 +1,8 @@
+===============
+INPUT STATEMENT
+===============
+go to the nearst cabinet on your left
+===============
+OUTPUT CODE
+===============
+Error: cannot schedule new futures after interpreter shutdown
